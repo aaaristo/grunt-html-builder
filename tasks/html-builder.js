@@ -12,6 +12,7 @@ module.exports = function(grunt)
       jsonpath= require('JSONPath').eval,
       jsrender= require('./jsrender'),
       fs= require('fs'),
+      util= require('util'),
       p= require('path');
 
   var pageTypes= {};
@@ -23,6 +24,10 @@ module.exports = function(grunt)
       _= grunt.util._,
       async= grunt.util.async,
       i18n,
+      mem= function ()
+      {
+         return util.inspect(process.memoryUsage());
+      },
       _html= function (config)
       {
           var src= p.join('src','html','html.html');
@@ -372,16 +377,18 @@ module.exports = function(grunt)
                  async.forEachSeries([config,globalConfig],_regions,done);
              };
 
-         jquery.create(html,function (window,jQuery)
+
+         jquery.create(html,function (window,jQuery,free)
          {
+             verbose.debug(mem(),'Generting page '+dest);
              window.execScript= function () {}; // disables jquery script evaluation
              $= jQuery;
              _build(function ()
              {
                  if (config.postBuild) config.postBuild($,lang); 
                  grunt.file.write(dest,jquery.source(window).replace(/xscript/g,'script'));
-                 window.close();
                  (lang!==defaultLanguage ? verbose : log).ok('Generated page '+dest); 
+                 free();
                  done();
              });
          });
@@ -470,13 +477,20 @@ module.exports = function(grunt)
   grunt.registerTask('html-builder', 'Assemble static HTML files', function() 
   {
      var config= grunt.config('html-builder') || {},
+         time= process.hrtime(),
          done= this.async();
 
      async.forEach([_pages],function (fn,done)
      {
           fn(config,done);
      },
-     done);
+     function ()
+     {
+          var diff= process.hrtime(time),
+              secs= Math.round((diff[0]*1e9+diff[1])/1e9);
+          verbose.debug('Stopping after '+secs+'secs, mem used ~'+Math.round(process.memoryUsage().rss/1024/1024)+'MB');
+          done();
+     });
   });
 
   grunt.registerTask('html-builder-json', 'Create chunks of JSON files', function() 
