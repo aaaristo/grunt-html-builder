@@ -190,8 +190,7 @@ module.exports = function(grunt)
                        fail.fatal('error in page type "'+pageType+'" href function: '+ex);
                     }
                   else
-                    return (lang&&lang!=defaultLanguage ? '/'+lang+'/' : '/')
-                           +pageType+'.html';
+                    return (lang&&lang!=defaultLanguage ? '/'+lang+'/' : '/')+pageType+'.html';
              };
 
          jsrender.helpers({ href: href });

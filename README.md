@@ -1,4 +1,4 @@
-# grunt-html
+# grunt-html [![Build Status](https://secure.travis-ci.org/aaaristo/grunt-html-builder.png?branch=master)](http://travis-ci.org/aaaristo/grunt-html-builder)
 
 Assemble static HTML files
 
