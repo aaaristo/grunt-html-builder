@@ -11,7 +11,6 @@ module.exports = function(grunt)
   var jquery= require('jquery-html'),
       jsonpath= require('JSONPath').eval,
       jsrender= require('./jsrender'),
-      async= require('async'),
       fs= require('fs'),
       p= require('path');
 
@@ -20,6 +19,8 @@ module.exports = function(grunt)
   var log= grunt.log,
       file= grunt.file,
       fail= grunt.fail,
+      _= grunt.util._,
+      async= grunt.util.async,
       i18n,
       _html= function (config)
       {
@@ -79,7 +80,7 @@ module.exports = function(grunt)
       },
       _alias= function (s)
       {
-        return s.replace(/[^a-z0-9]/gi,'_');
+        return s.replace(/[^a-z0-9]/gi,'-').toLowerCase();
       },
       _collection= function (name)
       {
@@ -110,7 +111,8 @@ module.exports = function(grunt)
               var src= p.join('src','js','transform',transformation+'.js'),
                   js= file.read(src);
 
-              eval('(function (grunt,clone,alias,json,done) { '+js+' })')(grunt,_clone,_alias,data,
+              eval('(function (grunt,_,clone,alias,collection,json,done) { '+js+' })')
+                  (grunt,_,_clone,_alias,_collection,data,
               function (transformed)
               {
                   data= transformed;
@@ -426,7 +428,8 @@ module.exports = function(grunt)
 
               try
               {   
-                  eval('(function (page,block,template,collection,transform,chunkdata,jsonpath) { '+js+' })')(addPage,_blockText,template,_collection,_transform,_chunkdata,jsonpath);
+                  eval('(function (page,block,template,collection,transform,chunkdata,alias,jsonpath) { '+js+' })')
+                                  (addPage,_blockText,template,_collection,_transform,_chunkdata,_alias,jsonpath);
               }
               catch (ex)
               {

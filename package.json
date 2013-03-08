@@ -29,8 +29,7 @@
   },
   "dependencies": {
     "jquery-html": "~0.1.0",
-    "JSONPath": "~0.9.1",
-    "async": "~0.2.5"
+    "JSONPath": "~0.9.1"
   },
   "devDependencies": {
     "grunt-contrib-jshint": "~0.2.0",
