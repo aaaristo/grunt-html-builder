@@ -1,0 +1,33 @@
+{
+  "name": "jsrender",
+  "description": "jsrender expressjs middleware",
+  "version": "0.0.3",
+  "author": {
+    "name": "Roman Shtylman",
+    "email": "shtylman@gmail.com"
+  },
+  "contributors": [
+    {
+      "name": "Boris Moore",
+      "email": "borismoore@gmail.com"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/shtylman/node-jsrender.git"
+  },
+  "scripts": {
+    "test": "nodeunit test.js"
+  },
+  "main": "index.js",
+  "directories": {
+    "lib": "./lib"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "nodeunit": "*"
+  },
+  "_id": "jsrender@0.0.3",
+  "readme": "ERROR: No README.md file found!",
+  "_from": "jsrender"
+}
