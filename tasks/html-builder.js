@@ -17,6 +17,7 @@ module.exports = function(grunt)
   var pageTypes= {};
 
   var log= grunt.log,
+      verbose= grunt.log.verbose,
       file= grunt.file,
       fail= grunt.fail,
       _= grunt.util._,
@@ -172,11 +173,20 @@ module.exports = function(grunt)
          var defaultLanguage= (globalConfig.languages ? globalConfig.languages[0] : undefined),
              href= function (pageType,data)
              {  
-                  if (pageTypes[pageType].href)
-                    return (lang&&lang!=defaultLanguage ? '/'+lang+'/' : '/')+
-                             pageTypes[pageType].href((data ? data : (this.tagCtx ? this.tagCtx.view.data : {})))+'.html';
+                  var config= pageTypes[pageType];
+                  if (config&&config.href)
+                    try
+                    {
+                        return (lang&&lang!=defaultLanguage ? '/'+lang+'/' : '/')+
+                                 config.href((data || (this.tagCtx ? this.tagCtx.view.data : {})))+'.html';
+                    }
+                    catch (ex)
+                    {
+                       fail.fatal('error in page type "'+pageType+'" href function: '+ex);
+                    }
                   else
-                    log.error('"'+pageType+'" page does not define a "href" function');
+                    return (lang&&lang!=defaultLanguage ? '/'+lang+'/' : '/')
+                           +pageType+'.html';
              };
 
          jsrender.helpers({ href: href });
@@ -208,7 +218,7 @@ module.exports = function(grunt)
                      else
                      {
                        if (lang!=defaultLanguage)
-                         log.error('no translation found for "'+o+'" ('+lang+')');
+                         verbose.error('no translation found for "'+o+'" ('+lang+')');
                        return o;
                      }
                   }
@@ -226,6 +236,7 @@ module.exports = function(grunt)
          var $,
              dest= p.join('dist',path+'.html'),
              html= _html(config),
+             defaultLanguage= (globalConfig.languages ? globalConfig.languages[0] : undefined),
              _data= function ($elem)
              {
                 var name= $elem.data('collection');
@@ -370,7 +381,7 @@ module.exports = function(grunt)
                  if (config.postBuild) config.postBuild($,lang); 
                  grunt.file.write(dest,jquery.source(window).replace(/xscript/g,'script'));
                  window.close();
-                 log.ok('Generated page '+dest); 
+                 (lang!==defaultLanguage ? verbose : log).ok('Generated page '+dest); 
                  done();
              });
          });
