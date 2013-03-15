@@ -15,7 +15,8 @@ module.exports = function(grunt)
       util= require('util'),
       p= require('path');
 
-  var pageTypes= {};
+  var pageTypes= {},
+      cache= {};
 
   var log= grunt.log,
       verbose= grunt.log.verbose,
@@ -28,27 +29,54 @@ module.exports = function(grunt)
       {
          return util.inspect(process.memoryUsage());
       },
+      _cache= function (cid,process)
+      {
+         var r,
+             cids= cid.split('.'),
+             current= cache;
+
+         for (var i=0;i<cids.length-1;i++)
+            current= current[cids[i]]= current[cids[i]] || {};
+
+         var lcid= cids[cids.length-1];
+
+         if ((r=current[lcid])===undefined)
+         {
+           r= process();
+           current[lcid]= r;
+         }
+
+         return r;
+      },
       _html= function (config)
       {
-          var src= p.join('src','html','html.html');
+          return _cache('html',function ()
+          { 
+              var src= p.join('src','html','html.html');
 
-          if (!file.exists(src))
-            src= p.join('node_modules','grunt-html-builder','resources','html.html');
+              if (!file.exists(src))
+                src= p.join('node_modules','grunt-html-builder','resources','html.html');
 
-          var tpl= jsrender.compile(file.read(src));
+              var tpl= jsrender.compile(file.read(src));
 
-          return tpl.render(config);
+              return tpl.render(config);
+          });
+      },
+      _layoutText= function (name)
+      {
+          return _cache('layout.'+name,function ()
+          {
+              var src= p.join('src','html','layout',name+'.html');
+
+              if (!file.exists(src))
+               fail.fatal('Cannot find layout "'+src+'"');
+
+              return file.read(src);
+          });
       },
       _layout= function (config)
       {
-          if (!config.layout) return false;
-
-          var src= p.join('src','html','layout',config.layout+'.html');
-
-          if (!file.exists(src))
-           fail.fatal('Cannot find layout "'+src+'"');
-
-          return file.read(src);
+          return !config.layout ? false : _layoutText(config.layout);
       },
       _writechunk= function (cdest,data,chunk,hasOthers)
       {
@@ -82,7 +110,7 @@ module.exports = function(grunt)
       },
       _clone= function (o)
       {
-        return JSON.parse(JSON.stringify(o||{}));
+        return JSON.parse(JSON.stringify(o));
       },
       _alias= function (s)
       {
@@ -90,25 +118,33 @@ module.exports = function(grunt)
       },
       _collection= function (name)
       {
-        var src= p.join('data','json',name+'.json');
+            var src= p.join('data','json',name+'.json'),
+                data= true;
 
-        if (!file.exists(src)) 
-        {
-          var src1= src;
-          src= p.join('src','json',name+'.json');
+            if (!file.exists(src)) 
+            {
+              var src1= src;
+              src= p.join('src','json',name+'.json');
 
-          if (!file.exists(src)) 
-            fail.fatal('Cannot find JSON "'+src+'" or "'+src1+'"');
-        }
+              if (!file.exists(src)) 
+                fail.fatal('Cannot find JSON "'+src+'" or "'+src1+'"');
 
-        try
-        {
-            return file.readJSON(src);
-        }
-        catch (ex)
-        {
-            fail.fatal('evaluating JSON :'+ex);
-        }
+              data= false;
+            }
+
+            var r= _cache('collection.'+(data ? 'data' : 'src')+'.'+name,function ()
+            {
+                try
+                {
+                    return file.readJSON(src);
+                }
+                catch (ex)
+                {
+                    fail.fatal('evaluating JSON :'+ex);
+                }
+            });
+
+            return r;
       },
       _transform= function (data,transformation)
       {
@@ -133,41 +169,47 @@ module.exports = function(grunt)
       },
       _template= function(name)
       {
-         var src= p.join('src','html','template',name+'.html');
-         
-         if (file.exists(src))
+         return _cache('template.'+name,function ()
          {
-           var text= file.read(src);
-           if (text!=='')
-             return {
-                       _tpl: jsrender.compile(text), 
-                       render: function (data)
-                       {
-                          try
-                          {
-                             return this._tpl.render(data);
-                          }
-                          catch (ex)
-                          {
-                             fail.fatal(ex+' evaluating template "'+src+'"');
-                          }
-                       }
-                    };
-           else
-             fail.fatal('Template "'+src+'" is empty');
-         }
-         else 
-           fail.fatal('Cannot find template "'+src+'"');
+             var src= p.join('src','html','template',name+'.html');
+             
+             if (file.exists(src))
+             {
+               var text= file.read(src);
+               if (text!=='')
+                 return {
+                           _tpl: jsrender.compile(text), 
+                           render: function (data)
+                           {
+                              try
+                              {
+                                 return this._tpl.render(data);
+                              }
+                              catch (ex)
+                              {
+                                 fail.fatal(ex+' evaluating template "'+src+'"');
+                              }
+                           }
+                        };
+               else
+                 fail.fatal('Template "'+src+'" is empty');
+             }
+             else 
+               fail.fatal('Cannot find template "'+src+'"');
+         });
       },
       _blockText= function (name,lang)
       {
-         var src= p.join('src','html','block',name+'.html');
+         return _cache('block.'+(lang ? '_lang.'+lang+'.' : '')+name,function ()
+         {
+             var src= p.join('src','html','block',name+'.html');
 
-         if (!file.exists(src)) fail.fatal('Cannot find block "'+src+'"');
+             if (!file.exists(src)) fail.fatal('Cannot find block "'+src+'"');
 
-         var text= file.read(src);
+             var text= file.read(src);
 
-         return (lang ? jsrender.compile(text).render({}) : text);
+             return (lang ? jsrender.compile(text).render({}) : text);
+         });
       },
       _i18n= function ()
       {
@@ -403,6 +445,8 @@ module.exports = function(grunt)
          {
               if (!/\.js$/.exec(filename)) return;
 
+              log.ok('Evaluating '+filename+'...');
+
               var js= file.read(filepath),
                   _config,
                   addPage= function (config)
@@ -458,13 +502,14 @@ module.exports = function(grunt)
          if (globalConfig.languages)
            i18n= _i18n();
 
-         async.forEach(pages,function (page,done)
+         async.forEachSeries(pages,function (page,done)
          {
            _page(page.path,page.lang,page.config,config,done);
          },
          function (err)
          {
             if (err) fail.fatal(err);
+            verbose.debug('Generated '+pages.length+' pages');
             done();
          });
       };
@@ -487,6 +532,7 @@ module.exports = function(grunt)
      {
           var diff= process.hrtime(time),
               secs= Math.round((diff[0]*1e9+diff[1])/1e9);
+          cache= {};
           verbose.debug('Stopping after '+secs+'secs, mem used ~'+Math.round(process.memoryUsage().rss/1024/1024)+'MB');
           done();
      });
