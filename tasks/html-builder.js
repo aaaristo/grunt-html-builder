@@ -112,7 +112,7 @@ module.exports = function(grunt)
              {
                  cb(page,{ current: idx+1, count: pages.length, pages: _.range(1,pages.length+1) });
              }]);
-         }
+         };
 
          return pages;
       },
