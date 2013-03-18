@@ -85,6 +85,37 @@ module.exports = function(grunt)
                     JSON.stringify({ chunk: chunk, items: data, hasOthers: hasOthers }));
          log.ok('Generated JSON chunk: '+dest);
       },
+      _paginate= function (arr,pageSize)
+      {
+         var pages= [],
+             origForEach= pages.forEach;
+
+         if (arr.length<=pageSize)
+           pages.push(arr);
+         else
+         {
+            var count= Math.ceil(arr.length/pageSize);
+            for (var i=0;i<count;i++)
+            {
+               var start= i*pageSize,
+                   end= start+pageSize;
+
+               if (end>arr.length) end= arr.length;
+
+               pages.push(arr.slice(start,end));
+            }
+         }
+
+         pages.forEach= function (cb)
+         {
+             origForEach.apply(this,[function (page,idx)
+             {
+                 cb(page,{ current: idx+1, count: pages.length, pages: _.range(1,pages.length+1) });
+             }]);
+         }
+
+         return pages;
+      },
       _chunkdata= function (data,dest,chunk)
       {
            var offset= 0,
@@ -153,8 +184,8 @@ module.exports = function(grunt)
               var src= p.join('src','js','transform',transformation+'.js'),
                   js= file.read(src);
 
-              eval('(function (grunt,_,clone,alias,collection,json,done) { '+js+' })')
-                  (grunt,_,_clone,_alias,_collection,data,
+              eval('(function (grunt,_,clone,paginate,alias,collection,json,done) { '+js+' })')
+                  (grunt,_,_clone,_paginate,_alias,_collection,data,
               function (transformed)
               {
                   data= transformed;
@@ -218,14 +249,14 @@ module.exports = function(grunt)
       _converters= function (lang,globalConfig)
       {
          var defaultLanguage= (globalConfig.languages ? globalConfig.languages[0] : undefined),
-             href= function (pageType,data)
+             href= function (pageType,data,pageNo)
              {  
                   var config= pageTypes[pageType];
                   if (config&&config.href)
                     try
                     {
                         return (lang&&lang!=defaultLanguage ? '/'+lang+'/' : '/')+
-                                 config.href((data || (this.tagCtx ? this.tagCtx.view.data : {})))+'.html';
+                                 config.href((data || (this.tagCtx ? this.tagCtx.view.data : {})),(pageNo ? pageNo : undefined))+'.html';
                     }
                     catch (ex)
                     {
@@ -489,8 +520,8 @@ module.exports = function(grunt)
 
               try
               {   
-                  eval('(function (page,block,template,collection,transform,chunkdata,alias,jsonpath) { '+js+' })')
-                                  (addPage,_blockText,template,_collection,_transform,_chunkdata,_alias,jsonpath);
+                  eval('(function (page,block,paginate,template,collection,transform,chunkdata,alias,jsonpath) { '+js+' })')
+                                  (addPage,_blockText,_paginate,template,_collection,_transform,_chunkdata,_alias,jsonpath);
               }
               catch (ex)
               {
