@@ -449,7 +449,7 @@ module.exports = function(grunt)
                  if (module)
                    $body.attr('data-module',config.name);
 
-                 async.forEachSeries([config,globalConfig],_regions,done);
+                 async.forEachSeries([globalConfig,config],_regions,done);
              };
 
 
