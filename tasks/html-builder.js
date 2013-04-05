@@ -13,7 +13,8 @@ module.exports = function(grunt)
       jsrender= require('./jsrender'),
       fs= require('fs'),
       util= require('util'),
-      p= require('path');
+      p= require('path'),
+      xmlbuilder = require("xmlbuilder");
 
   var pageTypes= {},
       cache= {};
@@ -433,6 +434,7 @@ module.exports = function(grunt)
 
                  var layout= _layout(config),
                      module= file.exists(p.join('src','client','js','module',config.name+'.js')),
+                     $head= $('head'),
                      $body= $(globalConfig.body ? globalConfig.body : 'body');
 
                  if (layout) $body.prepend(layout);
@@ -444,6 +446,14 @@ module.exports = function(grunt)
                    $body 
                      .attr('data-language',lang)
                      .attr('data-default-language',globalConfig.languages[0]);
+
+                   $('html').attr('lang',lang);
+
+                   globalConfig.languages.forEach(function (altLang)
+                   {
+                     if (altLang!=lang)
+                       $head.append('<link rel="alternate" hreflang="'+altLang+'" href="/'+altLang+'/'+path+'.html" />');
+                   });
                  }
                  
                  if (module)

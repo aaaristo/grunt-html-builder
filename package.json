@@ -35,7 +35,8 @@
     "grunt-contrib-jshint": "~0.2.0",
     "grunt-contrib-nodeunit": "~0.1.2",
     "grunt": "~0.4.0",
-    "grunt-contrib-watch": "~0.3.0"
+    "grunt-contrib-watch": "~0.3.0",
+    "xmlbuilder": "~0.4.2"
   },
   "peerDependencies": {
     "grunt": "~0.4.0"
