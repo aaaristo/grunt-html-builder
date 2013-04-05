@@ -117,11 +117,11 @@ exports['html'] = {
     ([],
       function(result) 
       {
-          test.ok(result.indexOf('Generated page dist/index.html') !== -1, 'page index created');
+          test.ok(result.indexOf('Generated page dist/index.html') !== -1, 'cannot find index.html');
 
           helper.$file('html_html/dist/index.html',function (window,$)
           {
-              test.equals($('title').html(), 'Good title', 'page title is correct');
+              test.equals($('title').html(), 'Good title', 'The title is incorrect');
           },done);
      });
   }

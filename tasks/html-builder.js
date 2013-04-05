@@ -48,7 +48,7 @@ module.exports = function(grunt)
 
          return r;
       },
-      _html= function (config)
+      _htmlText= function ()
       {
           return _cache('html',function ()
           { 
@@ -57,10 +57,13 @@ module.exports = function(grunt)
               if (!file.exists(src))
                 src= p.join('node_modules','grunt-html-builder','resources','html.html');
 
-              var tpl= jsrender.compile(file.read(src));
-
-              return tpl.render(config);
+              return file.read(src);
           });
+      },
+      _html= function (config)
+      {
+          var tpl= jsrender.compile(_htmlText());
+          return tpl.render(config);
       },
       _layoutText= function (name)
       {
