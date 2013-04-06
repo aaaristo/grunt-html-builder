@@ -452,7 +452,7 @@ module.exports = function(grunt)
                    globalConfig.languages.forEach(function (altLang)
                    {
                      if (altLang!=lang)
-                       $head.append('<link rel="alternate" hreflang="'+altLang+'" href="/'+altLang+'/'+path+'.html" />');
+                       $head.append('<link rel="alternate" hreflang="'+altLang+'" href="/'+(altLang==globalConfig.languages[0] ? path.substring(path.indexOf('/')+1) : altLang+'/'+path)+'.html" />');
                    });
                  }
                  
@@ -478,6 +478,32 @@ module.exports = function(grunt)
              });
          });
 
+      },
+      _sitemap= function (globalConfig,pages)
+      {
+            var doc= xmlbuilder.create(),
+                root= doc.begin('urlset')
+                    .att('xmlns', 'http://www.sitemaps.org/schemas/sitemap/0.9')
+                    .att('xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance')
+                    .att('xsi:schemaLocation', 'http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd');
+             
+            pages.forEach(function (page)
+            {
+                root.ele('url')
+                       .ele('loc')
+                         .txt(globalConfig.sitemap.urlPrefix+(page.path.match(/(^|\/)index$/) ? page.path.substring(0,page.path.length-5) : page.path+'.html'))
+                       .up()
+                       .ele('changefreq')
+                         .txt((page.changefreq ? page.changefreq : globalConfig.sitemap.changefreq)) 
+                       .up()
+                       .ele('priority')
+                         .txt((page.priority ? page.priority : globalConfig.sitemap.priority)) 
+                       .up()
+                    .up();
+            });
+
+            grunt.file.write('dist/sitemap.xml',doc.toString({ pretty: true }));
+            log.ok('Generated dist/sitemap.xml');
       },
       _pages= function (config,done)
       {
@@ -554,6 +580,7 @@ module.exports = function(grunt)
          {
             if (err) fail.fatal(err);
             verbose.debug('Generated '+pages.length+' pages');
+            if (globalConfig.sitemap) _sitemap(globalConfig,pages);
             done();
          });
       };
