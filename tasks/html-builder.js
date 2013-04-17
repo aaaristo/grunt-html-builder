@@ -468,6 +468,7 @@ module.exports = function(grunt)
              _build(function ()
              {
                  if (config.postBuild) config.postBuild($,lang); 
+                 if (globalConfig.postBuild) globalConfig.postBuild($,lang,config);
                  grunt.file.write(dest,jquery.source(window).replace(/xscript/g,'script'));
                  (lang!==defaultLanguage ? verbose : log).ok('Generated page '+dest); 
                  free();
