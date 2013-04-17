@@ -13,7 +13,8 @@ module.exports = function(grunt)
       jsrender= require('./jsrender'),
       fs= require('fs'),
       util= require('util'),
-      p= require('path');
+      p= require('path'),
+      xmlbuilder = require("xmlbuilder");
 
   var pageTypes= {},
       cache= {};
@@ -48,15 +49,25 @@ module.exports = function(grunt)
 
          return r;
       },
-      _html= function (config)
+      _htmlText= function ()
       {
           var src= p.join('src','html','html.html');
 
           if (!file.exists(src))
             src= p.join('node_modules','grunt-html-builder','resources','html.html');
 
+<<<<<<< HEAD
           var tpl= jsrender.compile(file.read(src));
 
+          return tpl.render(config);
+=======
+              return file.read(src);
+          });
+>>>>>>> 3e4ff7f8b9bc7a29bbd02baad20466a3a93cf61e
+      },
+      _html= function (config)
+      {
+          var tpl= jsrender.compile(_htmlText());
           return tpl.render(config);
       },
       _layoutText= function (name)
@@ -427,6 +438,7 @@ module.exports = function(grunt)
 
                  var layout= _layout(config),
                      module= file.exists(p.join('src','client','js','module',config.name+'.js')),
+                     $head= $('head'),
                      $body= $(globalConfig.body ? globalConfig.body : 'body');
 
                  if (layout) $body.prepend(layout);
@@ -438,12 +450,20 @@ module.exports = function(grunt)
                    $body 
                      .attr('data-language',lang)
                      .attr('data-default-language',globalConfig.languages[0]);
+
+                   $('html').attr('lang',lang);
+
+                   globalConfig.languages.forEach(function (altLang)
+                   {
+                     if (altLang!=lang)
+                       $head.append('<link rel="alternate" hreflang="'+altLang+'" href="/'+(altLang==globalConfig.languages[0] ? path.substring(path.indexOf('/')+1) : altLang+'/'+path)+'.html" />');
+                   });
                  }
                  
                  if (module)
                    $body.attr('data-module',config.name);
 
-                 async.forEachSeries([config,globalConfig],_regions,done);
+                 async.forEachSeries([globalConfig,config],_regions,done);
              };
 
 
@@ -462,6 +482,32 @@ module.exports = function(grunt)
              });
          });
 
+      },
+      _sitemap= function (globalConfig,pages)
+      {
+            var doc= xmlbuilder.create(),
+                root= doc.begin('urlset')
+                    .att('xmlns', 'http://www.sitemaps.org/schemas/sitemap/0.9')
+                    .att('xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance')
+                    .att('xsi:schemaLocation', 'http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd');
+             
+            pages.forEach(function (page)
+            {
+                root.ele('url')
+                       .ele('loc')
+                         .txt(globalConfig.sitemap.urlPrefix+(page.path.match(/(^|\/)index$/) ? page.path.substring(0,page.path.length-5) : page.path+'.html'))
+                       .up()
+                       .ele('changefreq')
+                         .txt((page.changefreq ? page.changefreq : globalConfig.sitemap.changefreq)) 
+                       .up()
+                       .ele('priority')
+                         .txt((page.priority ? page.priority : globalConfig.sitemap.priority)) 
+                       .up()
+                    .up();
+            });
+
+            grunt.file.write('dist/sitemap.xml',doc.toString({ pretty: true }));
+            log.ok('Generated dist/sitemap.xml');
       },
       _pages= function (config,done)
       {
@@ -538,6 +584,7 @@ module.exports = function(grunt)
          {
             if (err) fail.fatal(err);
             verbose.debug('Generated '+pages.length+' pages');
+            if (globalConfig.sitemap) _sitemap(globalConfig,pages);
             done();
          });
       };
