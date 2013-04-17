@@ -50,17 +50,14 @@ module.exports = function(grunt)
       },
       _html= function (config)
       {
-          return _cache('html',function ()
-          { 
-              var src= p.join('src','html','html.html');
+          var src= p.join('src','html','html.html');
 
-              if (!file.exists(src))
-                src= p.join('node_modules','grunt-html-builder','resources','html.html');
+          if (!file.exists(src))
+            src= p.join('node_modules','grunt-html-builder','resources','html.html');
 
-              var tpl= jsrender.compile(file.read(src));
+          var tpl= jsrender.compile(file.read(src));
 
-              return tpl.render(config);
-          });
+          return tpl.render(config);
       },
       _layoutText= function (name)
       {
