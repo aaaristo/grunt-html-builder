@@ -56,14 +56,7 @@ module.exports = function(grunt)
           if (!file.exists(src))
             src= p.join('node_modules','grunt-html-builder','resources','html.html');
 
-<<<<<<< HEAD
-          var tpl= jsrender.compile(file.read(src));
-
-          return tpl.render(config);
-=======
-              return file.read(src);
-          });
->>>>>>> 3e4ff7f8b9bc7a29bbd02baad20466a3a93cf61e
+          return file.read(src);
       },
       _html= function (config)
       {
