@@ -284,7 +284,7 @@ module.exports = function(grunt)
                      if (o[defaultLanguage])
                        return o[defaultLanguage];
                      else
-                       fail.fatal('no translation for: '+JSON.stringify(o));
+                       verbose.error('no translation for: '+JSON.stringify(o));
                   }
                   else
                   if (typeof o=='string')
