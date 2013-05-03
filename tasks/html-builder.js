@@ -30,6 +30,48 @@ module.exports = function(grunt)
       {
          return util.inspect(process.memoryUsage());
       },
+      _index= function(collection,by)
+      {
+          return _cache('index.'+collection+'.'+by,function ()
+          {
+              var idx= {};
+
+              _collection(collection).forEach(function (elem)
+              {
+                  idx[elem[by]]= elem;
+              });
+
+              return (function (idx) { return function (by) { return idx[by]; } })(idx);
+          });
+      },
+      _mindex= function(collection,by)
+      {
+          return _cache('mindex.'+collection+'.'+by,function ()
+          {
+              var idx= {},
+                  _push= function (val,elem)
+                  {
+                      var vals;
+                      if (!(vals=idx[val])) vals= idx[val]= [];
+                      vals.push(elem);
+                  };
+
+              _collection(collection).forEach(function (elem)
+              {
+                  var attr= elem[by];
+
+                  if (Array.isArray(attr))
+                    attr.forEach(function (val)
+                    {
+                       _push(val,elem);
+                    });
+                  else
+                    _push(attr,elem); 
+              });
+
+              return (function (idx) { return function (by) { return idx[by] || []; } })(idx);
+          });
+      },
       _cache= function (cid,process)
       {
          var r,
@@ -185,8 +227,8 @@ module.exports = function(grunt)
               var src= p.join('src','js','transform',transformation+'.js'),
                   js= file.read(src);
 
-              eval('(function (grunt,_,clone,paginate,alias,collection,json,done) { '+js+' })')
-                  (grunt,_,_clone,_paginate,_alias,_collection,data,
+              eval('(function (grunt,_,clone,paginate,alias,collection,json,index,mindex,done) { '+js+' })')
+                  (grunt,_,_clone,_paginate,_alias,_collection,data,_index,_mindex,
               function (transformed)
               {
                   data= transformed;
@@ -557,8 +599,8 @@ module.exports = function(grunt)
 
               try
               {   
-                  eval('(function (page,block,paginate,template,collection,transform,chunkdata,alias,jsonpath) { '+js+' })')
-                                  (addPage,_blockText,_paginate,template,_collection,_transform,_chunkdata,_alias,jsonpath);
+                  eval('(function (page,block,paginate,template,collection,transform,chunkdata,alias,jsonpath,index,mindex) { '+js+' })')
+                                  (addPage,_blockText,_paginate,template,_collection,_transform,_chunkdata,_alias,jsonpath,_index,_mindex);
               }
               catch (ex)
               {
