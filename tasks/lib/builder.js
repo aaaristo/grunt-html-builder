@@ -536,6 +536,12 @@ var   _index= function(collection,by)
              verbose.debug(mem(),'Generating page '+dest);
              window.execScript= function () {}; // disables jquery script evaluation
              $= jQuery;
+
+             var _source= function ()
+             {
+                return jquery.source(window).replace(/xscript/g,'script');
+             };
+
              _build(function ()
              {
                  try
@@ -557,8 +563,16 @@ var   _index= function(collection,by)
                  {
                     fail.fatal('error in global postBuild function: '+ex);
                  }
+                
+                 try
+                 { 
+                    grunt.file.write(dest,_source());
+                 }
+                 catch (ex) // retry
+                 {
+                    grunt.file.write(dest,_source());
+                 }
 
-                 grunt.file.write(dest,jquery.source(window).replace(/xscript/g,'script'));
                  (lang!==defaultLanguage ? verbose : log).ok('Generated page '+dest); 
                  free();
                  done();
