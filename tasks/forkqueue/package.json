@@ -1,0 +1,29 @@
+{
+  "author": {
+    "name": "Andrew J. Stone",
+    "email": "andrew.j.stone.1@gmail.com"
+  },
+  "name": "forkqueue",
+  "description": "A queue that is dequeued by forked processes",
+  "version": "0.0.7",
+  "repository": {
+    "type": "git",
+    "url": "github.com:andrewjstone/forkqueue.git"
+  },
+  "main": "queue.js",
+  "engines": {
+    "node": ">=0.8.0"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "mocha": "*"
+  },
+  "readme": "ForkQueue creates a queue where the items are removed via a 'next' message received from child processes. The number of child processes is passed to the constructor along with the full path of the module to run. The processes are spawned via child\\_process.fork\n# API\n\n## Constructor\n\n```javascript\nvar Queue = require('forkqueue');\nvar numWorkers = 5,\n    module = 'worker.js';\n\nvar queue = new Queue(numWorkers, module);\n```\n\n## Enqueue\nAdd a value to the queue\n\n```javascript\nfor (var i = 0; i < 100; i++) {\n  queue.enqueue(i);\n}\n```\n\n## Concat \nPuts the values of the array onto the queue\n\n```javascript\nvar vals = [];\nfor (var i = 0; i < 100; i++) {\n  vals.push(i);\n}\nqueue.concat(vals);\n```\n\n## End\nWait for the child processes to work through the queue then kill them.\n\n```javascript\nqueue.end(callback);\n```\n\n## Events\nThe Queue inherits from EventEmitter. It emits the following events:\n\n * ```queue.emit('msg', value)``` - a value forwarded from a worker \n * ```queue.emit('error', error)``` - an error\n * ```queue.emit('enqueue', value)``` - the enqueued value \n * ```queue.emit('dequeue', value)``` - the dequeued value \n * ```queue.emit('concat', values)``` - the list of values to enqueue\n * ```queue.emit('flush')``` - the queue is trying to flush outstanding tasks to available workers\n\n## Worker modules\n\nWorker modules are spawned with [child_process.fork](http://nodejs.org/api/child_process.html#child_process_child_process_fork_modulepath_args_options). In order to request a value off the queue, they send a 'next' message to the parent with ```process.send('next')```. The only message sent to them contains the value off the queue. They will exit with 'SIGTERM' sent from the parent after ```queue.end``` is called. They can also send arbitrary messages != 'next', that get emitted from the queue. \n\nA simple worker is below.\n\n```javascript\n  process.send({msg: 'some string'});\n\n  process.on('message', function(value) {\n    // Do something with value\n\n    // Tell the parent to return the next value off the queue\n    process.send('next');\n  });\n\n  process.send('next');\n```\n\n\n",
+  "readmeFilename": "README.md",
+  "_id": "forkqueue@0.0.7",
+  "dist": {
+    "shasum": "ee9583d42cc4f2b1db4770d068b866b90984e071"
+  },
+  "_from": "forkqueue@",
+  "_resolved": "https://registry.npmjs.org/forkqueue/-/forkqueue-0.0.7.tgz"
+}

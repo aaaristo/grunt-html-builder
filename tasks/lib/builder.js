@@ -1,38 +1,54 @@
-/*
- * grunt-html-builder
- * https://github.com/andrea/grunt-html-builder
- *
- * Copyright (c) 2013 Andrea Amerigo Aristodemo Gariboldi
- * Licensed under the MIT license.
- */
+const ID= process.argv[2];
 
-module.exports = function(grunt) 
-{
-  var jquery= require('jquery-html'),
-      jsonpath= require('JSONPath').eval,
-      jsrender= require('./jsrender'),
-      fs= require('fs'),
-      util= require('util'),
-      p= require('path'),
-      xmlbuilder = require("xmlbuilder"),
-      forkqueue= require('./forkqueue');
-
-  var pageTypes= {},
-      cache= {},
-      i18n,
-      pageQueue;
-
-  var log= grunt.log,
-      verbose= grunt.log.verbose,
-      file= grunt.file,
-      fail= grunt.fail,
-      _= grunt.util._,
-      async= grunt.util.async,
-      mem= function ()
-      {
+var grunt= require('grunt'),
+    jquery= require('jquery-html'),
+    jsonpath= require('JSONPath').eval,
+    jsrender= require('../jsrender'),
+    fs= require('fs'),
+    util= require('util'),
+    p= require('path'),
+    log= {
+            ok: function (m)
+            {
+                grunt.log.ok('builder['+ID+']: '+m);
+            } 
+         },
+    verbose= {
+                ok: function (m)
+                {
+                    grunt.log.verbose.ok('builder['+ID+']: '+m);
+                },
+                debug: function (m)
+                {
+                    grunt.log.verbose.debug('builder['+ID+']: '+m);
+                },
+                error: function (m)
+                {
+                    grunt.log.verbose.error('builder['+ID+']: '+m);
+                }
+             },
+    file= grunt.file,
+    fail= {
+        fatal: function (m)
+        {
+           var e= new Error(m);
+           e.fail= true;
+           throw(e);
+        }
+    },
+    _= grunt.util._,
+    async= grunt.util.async,
+    mem= function ()
+    {
          return util.inspect(process.memoryUsage());
-      },
-      _index= function(collection,by)
+    };
+
+var globalConfig,
+    pageTypes,
+    i18n,
+    cache= {};
+
+var   _index= function(collection,by)
       {
           return _cache('index.'+collection+'.'+by,function ()
           {
@@ -220,7 +236,7 @@ module.exports = function(grunt)
                 }
             });
 
-            return r;
+            return r.slice();
       },
       _transform= function (data,transformation)
       {
@@ -297,6 +313,7 @@ module.exports = function(grunt)
              href= function (pageType,data,pageNo)
              {  
                   var config= pageTypes[pageType];
+             
                   if (config&&config.href)
                     try
                     {
@@ -371,6 +388,8 @@ module.exports = function(grunt)
                        path= $elem.data('path'),
                        transform= $elem.data('transform');
 
+console.log(data,chunk);
+
                    if (chunk)
                      return data.slice(chunk-1,(chunk-1)+chunkSize);                      
                    else
@@ -415,7 +434,7 @@ module.exports = function(grunt)
              {
                 _traverse(ctx.data,function (key,value,object)
                 {
-                    if (typeof value=='object'&&value._tpl==true&&!(Array.isArray(object)&&isNaN(key)))
+                    if (typeof value=='object'&&value&&value._tpl==true&&!(Array.isArray(object)&&isNaN(key)))
                       object[key]= _resolveTemplates(value); // resolve nested templates
                 });
                  
@@ -440,6 +459,8 @@ module.exports = function(grunt)
 
                    var tpl= _template(name),
                        data= _data($container);
+
+                   console.log(data);
                    
                    if (data)
                      $container.append(tpl.render(data));
@@ -516,13 +537,31 @@ module.exports = function(grunt)
 
          jquery.create(html,function (window,jQuery,free)
          {
-             verbose.debug(mem(),'Generting page '+dest);
+             verbose.debug(mem(),'Generating page '+dest);
              window.execScript= function () {}; // disables jquery script evaluation
              $= jQuery;
              _build(function ()
              {
-                 if (config.postBuild) config.postBuild($,lang); 
-                 if (globalConfig.postBuild) globalConfig.postBuild($,lang,config);
+                 try
+                 {
+                     if (config.postBuild) 
+                       config.postBuild($,lang); 
+                 }
+                 catch (ex)
+                 {
+                    fail.fatal('error in page type "'+config.name+'" postBuild function: '+ex);
+                 }
+ 
+                 try
+                 {
+                     if (globalConfig.postBuild) 
+                       globalConfig.postBuild($,lang,config);
+                 }
+                 catch (ex)
+                 {
+                    fail.fatal('error in global postBuild function: '+ex);
+                 }
+
                  grunt.file.write(dest,jquery.source(window).replace(/xscript/g,'script'));
                  (lang!==defaultLanguage ? verbose : log).ok('Generated page '+dest); 
                  free();
@@ -530,189 +569,80 @@ module.exports = function(grunt)
              });
          });
 
-      },
-      _sitemap= function (globalConfig,pages)
-      {
-            var doc= xmlbuilder.create(),
-                root= doc.begin('urlset')
-                    .att('xmlns', 'http://www.sitemaps.org/schemas/sitemap/0.9')
-                    .att('xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance')
-                    .att('xsi:schemaLocation', 'http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd');
-             
-            pages.forEach(function (page)
-            {
-                root.ele('url')
-                       .ele('loc')
-                         .txt(globalConfig.sitemap.urlPrefix+(page.path.match(/(^|\/)index$/) ? page.path.substring(0,page.path.length-5) : page.path+'.html'))
-                       .up()
-                       .ele('changefreq')
-                         .txt((page.changefreq ? page.changefreq : globalConfig.sitemap.changefreq)) 
-                       .up()
-                       .ele('priority')
-                         .txt((page.priority ? page.priority : globalConfig.sitemap.priority)) 
-                       .up()
-                    .up();
-            });
+      };
 
-            grunt.file.write('dist/sitemap.xml',doc.toString({ pretty: true }));
-            log.ok('Generated dist/sitemap.xml');
-      },
-      _pages= function (config,done)
-      {
-         var pages= [],
-             globalConfig= config;
-
-         if (file.exists('src/js/page'))
-         file.recurse('src/js/page',function (filepath,rootdir,subdir,filename)
-         {
-              if (!/\.js$/.exec(filename)) return;
-
-              log.ok('Evaluating '+filename+'...');
-
-              var js= file.read(filepath),
-                  _config,
-                  addPage= function (config)
-                  {
-                     if (typeof config.href=='function')
-                       config.href= config.href.toString();
-                     
-                     if (typeof config.postBuild=='function')
-                       config.postBuild= config.postBuild.toString();
-
-                     var defaultLanguage,
-                         _add= function (config,lang)
-                         {
-                             pages.push({ path: (lang&&lang!=defaultLanguage ? lang+'/' : '')+config.path, config: config, lang: lang });
-                         };
-
-                     config.name= filename.replace('.js','');
-                     config.path= config.path || config.name;
-
-                     if (globalConfig.languages) 
-                     {
-                       defaultLanguage= globalConfig.languages[0];
-                       globalConfig.languages.forEach(function (lang,idx)
-                       {
-                          _add(config,lang);
-                       });
-                     }
-                     else
-                       _add(config);
-
-                     pageTypes[config.name]= config;
-                  },
-                  template= function (name,data)
-                  {
-                      return {
-                                _tpl: true,
-                                name: name,
-                                data: data
-                             };
-                  };
-
+var evalFnc= function (str)
+    {
               try
               {   
-                  eval('(function (page,block,paginate,template,collection,transform,chunkdata,alias,jsonpath,index,mindex) { '+js+' })')
-                                  (addPage,_blockText,_paginate,template,_collection,_transform,_chunkdata,_alias,jsonpath,_index,_mindex);
+                  return eval('(function (block,collection,transform,chunkdata,alias,jsonpath,index,mindex) { return '+str+'; })')
+                                  (_blockText,_collection,_transform,_chunkdata,_alias,jsonpath,_index,_mindex);
               }
               catch (ex)
               {
-                  fail.fatal(ex+' evaluating '+filepath);
+                 console.log(ex);
               }
-              
-         });
+    },
+    methods= {
+                   init: function (message,done)
+                   {
+                        globalConfig= message.globalConfig; 
+                        pageTypes= message.pageTypes; 
+                        i18n= message.i18n; 
 
-         if (globalConfig.languages)
-           i18n= _i18n();
+                        if (globalConfig.postBuild)
+                          globalConfig.postBuild= eval('('+globalConfig.postBuild+')');
 
-         var cpus= globalConfig.cpus || 1;
+                        _(pageTypes).forEach(function (pt)
+                        {
+                            if (pt.href)
+                              pt.href= evalFnc(pt.href);
+                        });
 
-         pageQueue= new forkqueue(cpus, __dirname+'/lib/builder.js');
+                        setTimeout(function ()
+                        {
+                            log.ok('inited');
+                            done();
+                        },100);
+                   },
+                   page: function (p,done)
+                   {
+                      if (p.config.postBuild)
+                        p.config.postBuild= evalFnc(p.config.postBuild);
 
-         if (typeof globalConfig.postBuild=='function')
-           globalConfig.postBuild= globalConfig.postBuild.toString(); 
+                      if (p.config.href)
+                        p.config.href= evalFnc(p.config.href);
 
-         var init= [],
-             wconf= { init: true, globalConfig: globalConfig, pageTypes: pageTypes, i18n: i18n };
+                      _page(p.path,p.lang,p.config,globalConfig,function ()
+                      {
+                           console.log('done');
+                           done(null,p);
+                      });
+                   }
+             };
 
-         _(cpus).times(function ()
-         {
-             init.push(wconf);
-         }); 
+process.on('message',function (message)
+{
+    var next= function (err, message)
+    {
+        process.send((err ? err : (message ? message : { ok: true })));
+        process.send('next');
+    };
 
-         pageQueue.concat(init);
-         pageQueue.concat(pages);
+    try
+    {
+       if (message.init)
+         methods.init(message,next);
+       else
+         methods.page(message,next);
+    }
+    catch (ex)
+    {
+        console.log(ex);
+        throw ex;
+    }
+});
 
-         pageQueue.end(function ()
-         {
-            console.log('end');
-            verbose.debug('Generated '+pages.length+' pages');
-            if (globalConfig.sitemap) _sitemap(globalConfig,pages);
-            done();
-         });
+console.log('builder started',process.argv);
 
-
-      };
-
-  grunt.html= {
-                 collection: _collection
-              };
-
-  grunt.registerTask('html-builder', 'Assemble static HTML files', function() 
-  {
-     var config= grunt.config('html-builder') || {},
-         time= process.hrtime(),
-         done= this.async();
-
-     async.forEach([_pages],function (fn,done)
-     {
-          fn(config,done);
-     },
-     function ()
-     {
-          var diff= process.hrtime(time),
-              secs= Math.round((diff[0]*1e9+diff[1])/1e9);
-          cache= {};
-          verbose.debug('Stopping after '+secs+'secs, mem used ~'+Math.round(process.memoryUsage().rss/1024/1024)+'MB');
-          done();
-     });
-  });
-
-  grunt.registerTask('html-builder-json', 'Create chunks of JSON files', function() 
-  {
-     var config= grunt.config('html-builder').json,
-         done= this.async();
-
-     async.forEach(config,function (config,done)
-     {
-         var data= _collection(config.collection);
-
-         if (config.filter)
-           data= jsonpath(data,config.filter);
-
-         if (config.slice)
-           _writechunk(config.dest,data.slice.apply(data,config.slice));
-         else
-         if (config.chunk)
-           _chunkdata(data,config.dest,config.chunk);
-         else
-         if (config.transform)
-         {
-            var dest= p.join('data/json',config.dest+'.json');
-
-            if (file.exists(dest)) 
-             file.delete(dest);
-
-            file.write(dest,
-                       JSON.stringify(_transform(data,config.transform)));
-            log.ok('Generated JSON collection: '+dest);
-         }
-         else 
-           _writechunk(config.dest,data);
-
-         done();
-     },
-     done);
-  });
-
-};
+process.send('next');
