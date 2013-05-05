@@ -388,8 +388,6 @@ var   _index= function(collection,by)
                        path= $elem.data('path'),
                        transform= $elem.data('transform');
 
-console.log(data,chunk);
-
                    if (chunk)
                      return data.slice(chunk-1,(chunk-1)+chunkSize);                      
                    else
@@ -460,8 +458,6 @@ console.log(data,chunk);
                    var tpl= _template(name),
                        data= _data($container);
 
-                   console.log(data);
-                   
                    if (data)
                      $container.append(tpl.render(data));
                 });
@@ -615,7 +611,6 @@ var evalFnc= function (str)
 
                       _page(p.path,p.lang,p.config,globalConfig,function ()
                       {
-                           console.log('done');
                            done(null,p);
                       });
                    }
@@ -642,7 +637,5 @@ process.on('message',function (message)
         throw ex;
     }
 });
-
-console.log('builder started',process.argv);
 
 process.send('next');

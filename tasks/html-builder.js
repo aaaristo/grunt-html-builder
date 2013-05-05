@@ -645,7 +645,6 @@ module.exports = function(grunt)
 
          pageQueue.end(function ()
          {
-            console.log('end');
             verbose.debug('Generated '+pages.length+' pages');
             if (globalConfig.sitemap) _sitemap(globalConfig,pages);
             done();
