@@ -613,7 +613,7 @@ var evalFnc= function (str)
                         {
                             log.ok('inited');
                             done();
-                        },100);
+                        },message.wait);
                    },
                    page: function (p,done)
                    {

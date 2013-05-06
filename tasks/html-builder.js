@@ -12,6 +12,7 @@ module.exports = function(grunt)
       jsonpath= require('JSONPath').eval,
       jsrender= require('./jsrender'),
       fs= require('fs'),
+      os= require('os'),
       util= require('util'),
       p= require('path'),
       xmlbuilder = require("xmlbuilder"),
@@ -625,7 +626,7 @@ module.exports = function(grunt)
          if (globalConfig.languages)
            i18n= _i18n();
 
-         var cpus= globalConfig.cpus || 1;
+         var cpus= globalConfig.cpus || os.cpus().length;
 
          pageQueue= new forkqueue(cpus, __dirname+'/lib/builder.js');
 
@@ -633,12 +634,14 @@ module.exports = function(grunt)
            globalConfig.postBuild= globalConfig.postBuild.toString(); 
 
          var init= [],
-             wconf= { init: true, globalConfig: globalConfig, pageTypes: pageTypes, i18n: i18n };
+             wconf= { init: true, globalConfig: globalConfig, pageTypes: pageTypes, i18n: i18n, wait: cpus*100 };
 
          _(cpus).times(function ()
          {
              init.push(wconf);
          }); 
+
+         log.ok('Launching builders...');
 
          pageQueue.concat(init);
          pageQueue.concat(pages);
