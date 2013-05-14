@@ -4,6 +4,7 @@ var grunt= require('grunt'),
     jquery= require('jquery-html'),
     jsonpath= require('JSONPath').eval,
     jsrender= require('../jsrender'),
+    xlsx= require('./xlsx');
     fs= require('fs'),
     util= require('util'),
     p= require('path'),
@@ -238,6 +239,40 @@ var   _index= function(collection,by)
 
             return r.slice();
       },
+      _parseExcel= function (src)
+      {
+            return xlsx.decode(fs.readFileSync(src, "base64"));
+      },
+      _excel= function (name)
+      {
+            var src= p.join('data','excel',name+'.xlsx'),
+                data= true;
+
+            if (!file.exists(src)) 
+            {
+              var src1= src;
+              src= p.join('src','excel',name+'.xlsx');
+
+              if (!file.exists(src)) 
+                fail.fatal('Cannot find excel "'+src+'" or "'+src1+'"');
+
+              data= false;
+            }
+
+            var r= _cache('excel.'+(data ? 'data' : 'src')+'.'+name,function ()
+            {
+                try
+                {
+                    return _parseExcel(src);
+                }
+                catch (ex)
+                {
+                    fail.fatal('parsing excel:'+ex);
+                }
+            });
+
+            return r;
+      },
       _transform= function (data,transformation)
       {
           try
@@ -245,8 +280,8 @@ var   _index= function(collection,by)
               var src= p.join('src','js','transform',transformation+'.js'),
                   js= file.read(src);
 
-              eval('(function (grunt,_,clone,paginate,alias,collection,json,index,mindex,done) { '+js+' })')
-                  (grunt,_,_clone,_paginate,_alias,_collection,data,_index,_mindex,
+              eval('(function (grunt,_,clone,paginate,alias,collection,excel,json,index,mindex,done) { '+js+' })')
+                  (grunt,_,_clone,_paginate,_alias,_collection,_excel,data,_index,_mindex,
               function (transformed)
               {
                   data= transformed;
@@ -585,8 +620,8 @@ var evalFnc= function (str)
     {
               try
               {   
-                  return eval('(function (block,collection,transform,chunkdata,alias,jsonpath,index,mindex) { return '+str+'; })')
-                                  (_blockText,_collection,_transform,_chunkdata,_alias,jsonpath,_index,_mindex);
+                  return eval('(function (block,collection,excel,transform,chunkdata,alias,jsonpath,index,mindex) { return '+str+'; })')
+                                  (_blockText,_collection,_excel,_transform,_chunkdata,_alias,jsonpath,_index,_mindex);
               }
               catch (ex)
               {

@@ -16,7 +16,8 @@ module.exports = function(grunt)
       util= require('util'),
       p= require('path'),
       xmlbuilder = require("xmlbuilder"),
-      forkqueue= require('./forkqueue');
+      forkqueue= require('./forkqueue'),
+      xlsx= require('./lib/xlsx');
 
   var pageTypes= {},
       cache= {},
@@ -35,21 +36,29 @@ module.exports = function(grunt)
       },
       _index= function(collection,by)
       {
-          return _cache('index.'+collection+'.'+by,function ()
+          var _process= function (arr)
           {
               var idx= {};
 
-              _collection(collection).forEach(function (elem)
+              arr.forEach(function (elem)
               {
                   idx[elem[by]]= elem;
               });
 
               return (function (idx) { return function (by) { return idx[by]; } })(idx);
-          });
+          };
+
+          if (typeof collection=='string')
+            return _cache('index.'+collection+'.'+by,function ()
+            {
+               return _process(_collection(collection),by);
+            });
+          else
+            return _process(collection,by);
       },
       _mindex= function(collection,by)
       {
-          return _cache('mindex.'+collection+'.'+by,function ()
+          var _process= function (arr)
           {
               var idx= {},
                   _push= function (val,elem)
@@ -59,7 +68,7 @@ module.exports = function(grunt)
                       vals.push(elem);
                   };
 
-              _collection(collection).forEach(function (elem)
+              arr.forEach(function (elem)
               {
                   var attr= elem[by];
 
@@ -73,7 +82,15 @@ module.exports = function(grunt)
               });
 
               return (function (idx) { return function (by) { return idx[by] || []; } })(idx);
-          });
+          };
+
+          if (typeof collection=='string')
+            return _cache('mindex.'+collection+'.'+by,function ()
+            {
+               return _process(_collection(collection),by);
+            });
+          else
+            return _process(collection,by);
       },
       _cache= function (cid,process)
       {
@@ -223,6 +240,102 @@ module.exports = function(grunt)
 
             return r;
       },
+      _parseExcel= function (src)
+      {
+            var workbook= xlsx.decode(fs.readFileSync(src, "base64"));
+
+            workbook.sheet= function (name)
+            { 
+               var worksheet;
+
+               this.worksheets.forEach(function (s)
+               {
+                  if (s.name==name)
+                  {
+                      worksheet= s;
+                      return false;
+                  }
+               });
+
+               return worksheet;
+            }
+
+            workbook.worksheets.forEach(function (s)
+            {
+               s.toJSON= function (fields,_transformFnc)
+               {
+                  var r= [];
+
+                  this.data.forEach(function (row,idx)
+                  {
+                      if (idx==0) return true;
+
+                      var obj= {},
+                          _value= function (value)
+                          {
+                             return value.value;
+                          },
+                          _val= function (field,value)
+                          {
+                             var r,
+                                 path= field.split('.'),
+                                 current= obj;
+
+                             for (var i=0;i<path.length-1;i++)
+                                current= current[path[i]]= current[path[i]] || {};
+
+                             current[path[path.length-1]]= _value(value);
+                          };
+
+                      for (var i=0;i<fields.length;i++)
+                         _val(fields[i],row[i]); 
+
+                      if (_transformFnc)
+                        obj= _transformFnc(obj);
+                      
+                      if (Array.isArray(obj))
+                        r.concat(obj);
+                      else
+                      if (obj)
+                        r.push(obj);
+                  });
+
+                  return r;
+               }
+            });
+
+            return workbook;
+      },
+      _excel= function (name)
+      {
+            var src= p.join('data','excel',name+'.xlsx'),
+                data= true;
+
+            if (!file.exists(src)) 
+            {
+              var src1= src;
+              src= p.join('src','excel',name+'.xlsx');
+
+              if (!file.exists(src)) 
+                fail.fatal('Cannot find excel "'+src+'" or "'+src1+'"');
+
+              data= false;
+            }
+
+            var r= _cache('excel.'+(data ? 'data' : 'src')+'.'+name,function ()
+            {
+                try
+                {
+                    return _parseExcel(src);
+                }
+                catch (ex)
+                {
+                    fail.fatal('parsing excel:'+ex);
+                }
+            });
+
+            return r;
+      },
       _transform= function (data,transformation)
       {
           try
@@ -230,8 +343,8 @@ module.exports = function(grunt)
               var src= p.join('src','js','transform',transformation+'.js'),
                   js= file.read(src);
 
-              eval('(function (grunt,_,clone,paginate,alias,collection,json,index,mindex,done) { '+js+' })')
-                  (grunt,_,_clone,_paginate,_alias,_collection,data,_index,_mindex,
+              eval('(function (grunt,_,clone,paginate,alias,collection,excel,json,index,mindex,done) { '+js+' })')
+                  (grunt,_,_clone,_paginate,_alias,_collection,_excel,data,_index,_mindex,
               function (transformed)
               {
                   data= transformed;
@@ -613,8 +726,8 @@ module.exports = function(grunt)
 
               try
               {   
-                  eval('(function (page,block,paginate,template,collection,transform,chunkdata,alias,jsonpath,index,mindex) { '+js+' })')
-                                  (addPage,_blockText,_paginate,template,_collection,_transform,_chunkdata,_alias,jsonpath,_index,_mindex);
+                  eval('(function (page,block,paginate,template,collection,excel,transform,chunkdata,alias,jsonpath,index,mindex) { '+js+' })')
+                                  (addPage,_blockText,_paginate,template,_collection,_excel,_transform,_chunkdata,_alias,jsonpath,_index,_mindex);
               }
               catch (ex)
               {
@@ -687,7 +800,7 @@ module.exports = function(grunt)
 
      async.forEach(config,function (config,done)
      {
-         var data= _collection(config.collection);
+         var data= (config.collection ? _collection(config.collection) : _excel(config.excel));
 
          if (config.filter)
            data= jsonpath(data,config.filter);
@@ -706,7 +819,7 @@ module.exports = function(grunt)
              file.delete(dest);
 
             file.write(dest,
-                       JSON.stringify(_transform(data,config.transform)));
+                       JSON.stringify(_transform(data,config.transform), undefined, 2));
             log.ok('Generated JSON collection: '+dest);
          }
          else 
