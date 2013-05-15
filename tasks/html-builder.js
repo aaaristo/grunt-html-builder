@@ -760,13 +760,15 @@ module.exports = function(grunt)
 
          var cpus= globalConfig.cpus || os.cpus().length;
 
+         if (cpus > pages.length) cpus= pages.length;
+
          pageQueue= new forkqueue(cpus, __dirname+'/lib/builder.js');
 
          if (typeof globalConfig.postBuild=='function')
            globalConfig.postBuild= globalConfig.postBuild.toString(); 
 
          var init= [],
-             wconf= { init: true, globalConfig: globalConfig, pageTypes: pageTypes, i18n: i18n, wait: cpus*100 };
+             wconf= { init: true, globalConfig: globalConfig, pageTypes: pageTypes, i18n: i18n, wait: (cpus>1 ? cpus*100 : 1) };
 
          _(cpus).times(function ()
          {
@@ -775,17 +777,22 @@ module.exports = function(grunt)
 
          pages= _filterPages(pages); 
 
-         log.ok('Launching builders...');
-
-         pageQueue.concat(init);
-         pageQueue.concat(pages);
-
-         pageQueue.end(function ()
+         if (pages.length)
          {
-            verbose.debug('Generated '+pages.length+' pages');
-            if (globalConfig.sitemap) _sitemap(globalConfig,pages);
-            done();
-         });
+             log.ok('Launching builders...');
+
+             pageQueue.concat(init);
+             pageQueue.concat(pages);
+
+             pageQueue.end(function ()
+             {
+                verbose.debug('Generated '+pages.length+' pages');
+                if (globalConfig.sitemap) _sitemap(globalConfig,pages);
+                done();
+             });
+         }
+         else
+           done();
 
 
       };
@@ -818,6 +825,12 @@ module.exports = function(grunt)
   {
      var config= grunt.config('html-builder').json,
          done= this.async();
+
+     if (!config) 
+     {
+        done();
+        return;
+     }
 
      async.forEach(config,function (config,done)
      {
