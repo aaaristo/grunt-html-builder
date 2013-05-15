@@ -5,7 +5,7 @@ starting from json (and xlsx) files to describe data (products, people... etc),
 all integrated in a maven like build lifecycle based on conventions against configuration.
 
 Actually we build a medium complexity site of ~4500 pages in ~120secs on a quad-core iMac,
-with SSD. That was really good enought to us.
+with SSD.
 
 ## Getting Started
 Install this grunt plugin next to your project'
