@@ -123,7 +123,7 @@ Things to document:
 * s3 / cloudfront deploy
 
 ## Release History
-* 2013-05-15   v0.4.20   First documented release
+* 2013-05-15   v0.4.20   First documented BETA release
 
 ## License
 Copyright (c) 2013 Andrea Amerigo Aristodemo Gariboldi  
