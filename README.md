@@ -1,6 +1,7 @@
 # grunt-html-builder [![Build Status](https://secure.travis-ci.org/aaaristo/grunt-html-builder.png?branch=master)](http://travis-ci.org/aaaristo/grunt-html-builder)
 
 Assemble static HTML files in parallel using jquery, jsrender and *child_process* nodejs module,
+starting from json (and xlsx) files to describe data (products, people... etc),
 all integrated in a maven like build lifecycle based on conventions against configuration.
 
 ## Getting Started
