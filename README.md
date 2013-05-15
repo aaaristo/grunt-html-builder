@@ -277,13 +277,13 @@ a look at how the builder builds your pages:
   the syntax is:
 
 <pre>
-    blocks: { <region>: '<block>' }
+    blocks: { region: 'block' }
 </pre>
 
   or of course (to place multiple blocks in order)
 
 <pre>
-    blocks: { <region>: ['<block1>','<block2>',...] }
+    blocks: { region: ['block1','block2',...] }
 </pre>
 
  * so blocks are almost always static pieces of html that you want to reuse in various pages,
