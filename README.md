@@ -199,21 +199,23 @@ _(100).times(function (i)
    *home* type. So yes probably the home.js in almost any site will call the page function 1 time (so 
    revert this dumb thing).
 
-5. Now lets suppose you want to create a page for every people in your company, create a *src/js/page/person.js* like this:
+5. Now lets suppose you want to create a page for every people in your company, create a 
+   *src/js/page/person.js* like this:
 
 ```javascript
-['Paola','Maurizio','Andrea','Alessandro','Daniele','Matteo','Roberta','Elena'].forEach(function (person)
+['Paola','Maurizio','Andrea','Alessandro','Daniele','Matteo','Roberta','Elena']
+.forEach(function (person)
 {
    page({ path: 'person/'+person.toLowerCase(), person: person });
 });
 ```
-  so ok you got it... Open html.html and replace the content of the title tag to read: 
+   so ok you got it... Open html.html and replace the content of the title tag to read: 
 
 ```html
 <title>{{>person}}'s page</title>
 ```
 
-  almost any html is a jsrender template.
+   almost any html is a jsrender template.
 
 ** ... doc in progress ...**
 
