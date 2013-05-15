@@ -18,7 +18,7 @@ grunt.loadNpmTasks('grunt-html-builder');
 The simplest way to get started is:
 <pre>
 $ git clone git://github.com/aaaristo/html-builder-sample.git
-<pre>
+</pre>
 
 This will bring you a preconfigured project with most common options,
 that contains 4 files:
@@ -28,7 +28,7 @@ $ find ./ -type f
 ./package.json
 ./README.md
 ./src/js/page/home.js
-<pre>
+</pre>
 
 Let's skip the *Gruntfile.js* for the moment. (as usal it contains various grunt tasks configurations) 
 
