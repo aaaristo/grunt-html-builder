@@ -116,9 +116,9 @@ Things to document:
 * excel(xlsx) transformations
 * index / mindex / cache
 * html html
-* html layouts
-* html templates (jsrender)
+* html layouts / regions
 * html blocks
+* html templates (jsrender)
 * postBuild hooks (enables you to modify the generated html with jquery before html file are written to disk)
 * client files (images,css,js...)
 * filtering pages
