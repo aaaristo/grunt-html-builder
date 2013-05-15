@@ -200,6 +200,7 @@ _(100).times(function (i)
    revert this dumb thing).
 
 5. Now lets suppose you want to create a page for every people in your company, create a *src/js/page/person.js* like this:
+
 ```javascript
 ['Paola','Maurizio','Andrea','Alessandro','Daniele','Matteo','Roberta','Elena'].forEach(function (person)
 {
