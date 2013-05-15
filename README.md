@@ -181,9 +181,9 @@ on your browser by refreshing the page.
 Ok, probably you have a more complex site to build than this, so lets take
 a look at how the builder builds your pages:
 
-1. as seen it uses the *src/html/html.html* to start (or a default html if it is not provided)
-2. it goes throught all the files in *src/js/page* to understand which pages to build
-3. your files tell him how many pages to build by simply calling the *page* function many times,
+* as seen it uses the *src/html/html.html* to start (or a default html if it is not provided)
+* it goes throught all the files in *src/js/page* to understand which pages to build
+* your files tell him how many pages to build by simply calling the *page* function many times,
    to experiment try to change the *home.js* file to read:
    
    ```javascript
@@ -200,7 +200,7 @@ a look at how the builder builds your pages:
    *home* type. So yes probably the home.js in almost any site will call the page function 1 time (so 
    revert this dumb thing).
 
-5. Now lets suppose you want to create a page for every people in your company, create a 
+* Now lets suppose you want to create a page for every people in your company, create a 
    *src/js/page/person.js* like this:
 
 ```javascript
