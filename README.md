@@ -102,6 +102,7 @@ Not so impressive...
 **doc in progress**
 
 Things to document:
+* lifecycle
 * parallel generation / cpu detection / pages.length
 * json collections
 * json trasformations
