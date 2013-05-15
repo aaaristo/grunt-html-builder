@@ -204,7 +204,7 @@ a look at how the builder builds your pages:
    *src/js/page/person.js* like this:
 
 ```javascript
-['John','Jane','Dave','Mark']
+['John','Jane','Dave','Mike']
 .forEach(function (person)
 {
    page({ path: 'person/'+person.toLowerCase(), person: person });
@@ -237,7 +237,7 @@ a look at how the builder builds your pages:
    layout property to the page object:
 
 ```javascript
-['John','Jane','Dave','Mark']
+['John','Jane','Dave','Mike']
 .forEach(function (person)
 {
    page({ layout: 'sidebar', path: 'person/'+person.toLowerCase(), person: person });
@@ -261,7 +261,7 @@ a look at how the builder builds your pages:
   and tell the builder you want it in the sidebar region (time to indent a bit): 
 
 ```javascript
-['John','Jane','Dave','Mark']
+['John','Jane','Dave','Mike']
 .forEach(function (person)
 {
    page
@@ -304,7 +304,7 @@ a look at how the builder builds your pages:
 
 
 ```javascript
-var people= ['John','Jane','Dave','Mark'];
+var people= ['John','Jane','Dave','Mike'];
 
 people.forEach(function (person)
 {
@@ -322,7 +322,7 @@ people.forEach(function (person)
   i create urls for a page? Yes, so:
 
 ```javascript
-var people= ['John','Jane','Dave','Mark'],
+var people= ['John','Jane','Dave','Mike'],
     href= function (person)
     {
        return 'person/'+person.toLowerCase();
