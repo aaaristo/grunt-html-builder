@@ -104,9 +104,117 @@ that look like this:
 </html>
 ```
 
-Not so impressive...
+Not so impressive... This is the base html created by the builder,
+and you can but you can completely adjust as you wish by creating a
+file *src/html/html.html*, let's suppose with H5BP http://html5boilerplate.com/:
 
-**doc in progress**
+```html
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title></title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width">
+
+        <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
+
+        <link rel="stylesheet" href="css/normalize.css">
+        <link rel="stylesheet" href="css/main.css">
+        <script src="js/vendor/modernizr-2.6.2.min.js"></script>
+    </head>
+    <body>
+        <!--[if lt IE 7]>
+            <p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
+        <![endif]-->
+
+        <!-- Add your site or application content here -->
+        <p>Hello world! This is HTML5 Boilerplate.</p>
+
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+        <script>window.jQuery || document.write('<script src="js/vendor/jquery-1.9.1.min.js"><\/script>')</script>
+        <script src="js/plugins.js"></script>
+        <script src="js/main.js"></script>
+
+        <!-- Google Analytics: change UA-XXXXX-X to be your site's ID. -->
+        <script>
+            var _gaq=[['_setAccount','UA-XXXXX-X'],['_trackPageview']];
+            (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+            g.src='//www.google-analytics.com/ga.js';
+            s.parentNode.insertBefore(g,s)}(document,'script'));
+        </script>
+    </body>
+</html>
+```
+Rerun *grunt* and try the site with *grunt listen* (grunt-contrib-connect + grunt-contrib-watch). 
+Ok now we have nice html but we miss some resources, right?
+So create the *src/client/* directory so that you have a root
+for files that have to be accessed by the browser and place H5BP
+resources in there like this:
+
+<pre>
+src/client
+src/client/css
+src/client/css/main.css
+src/client/css/normalize.css
+src/client/img
+src/client/img/.gitignore
+src/client/js
+src/client/js/main.js
+src/client/js/plugins.js
+src/client/js/vendor
+src/client/js/vendor/jquery-1.9.1.min.js
+src/client/js/vendor/modernizr-2.6.2.min.js
+</pre>
+
+and if you don't have the *grunt listen* running give it a *grunt client*
+to make grunt copy the files and directories under *src/client* to the
+*dist* directory. Now once you have the *grunt listen* active the are kept
+in sync by grunt (grunt-contrib-watch + grunt-contrib-copy). The same
+is true for page generation... Try to edit the html.html file and see the results
+on your browser by refreshing the page.
+
+Ok, probably you have a more complex site to build than this, so lets take
+a look at how the builder builds your pages:
+
+1. as seen it uses the *src/html/html.html* to start (or a default html if it is not provided)
+2. it goes throught all the files in *src/js/page* to understand which pages to build
+3. your files tell him how many pages to build by simply calling the *page* function many times,
+   to experiment try to change the *home.js* file to read:
+
+```javascript
+_(100).times(function (i)
+{
+   page({ path: 'index'+i });
+});
+```
+   yes... it dumbly creates 100 pages. But you now know you can use underscore.js in those files
+   by default, and that the path attribute tells the builder which html files to create. There is
+   another thing to note: all those pages from now on are of the same type for the builder, the type
+   is a machine name given by the name of the js file that asks the creation of a page, in this case
+   *home* type. So yes probably the home.js in almost any site will call the page function 1 time (so 
+   revert this dumb thing).
+
+5. Now lets suppose you want to create a page for every people in your company, create a *src/js/page/person.js* like this:
+```javascript
+['Paola','Maurizio','Andrea','Alessandro','Daniele','Matteo','Roberta','Elena'].forEach(function (person)
+{
+   page({ path: 'person/'+person.toLowerCase(), person: person });
+});
+```
+  so ok you got it... Open html.html and replace the content of the title tag to read: 
+
+```html
+<title>{{>person}}'s page</title>
+```
+
+  almost any html is a jsrender template.
+
+** ... doc in progress ...**
 
 Things to document:
 * lifecycle
