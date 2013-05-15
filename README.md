@@ -123,9 +123,9 @@ file *src/html/html.html*, let's suppose with H5BP http://html5boilerplate.com/:
 
         <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
 
-        <link rel="stylesheet" href="css/normalize.css">
-        <link rel="stylesheet" href="css/main.css">
-        <script src="js/vendor/modernizr-2.6.2.min.js"></script>
+        <link rel="stylesheet" href="/css/normalize.css">
+        <link rel="stylesheet" href="/css/main.css">
+        <script src="/js/vendor/modernizr-2.6.2.min.js"></script>
     </head>
     <body>
         <!--[if lt IE 7]>
@@ -137,8 +137,8 @@ file *src/html/html.html*, let's suppose with H5BP http://html5boilerplate.com/:
 
         <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
         <script>window.jQuery || document.write('<script src="js/vendor/jquery-1.9.1.min.js"><\/script>')</script>
-        <script src="js/plugins.js"></script>
-        <script src="js/main.js"></script>
+        <script src="/js/plugins.js"></script>
+        <script src="/js/main.js"></script>
 
         <!-- Google Analytics: change UA-XXXXX-X to be your site's ID. -->
         <script>
@@ -216,7 +216,146 @@ a look at how the builder builds your pages:
 <title>{{>person}}'s page</title>
 ```
 
-   almost any html is a jsrender template.
+   almost any html is a jsrender template the html.html renders the page object by default,
+   so that you can use it to store the page title / meta description, etc... But this is not
+   ment to create entire pages.
+
+ * Instead you can instruct the builder to use a *layout* for your pages so that you can benefit
+   from splitting the page in many *regions*. For example lets suppose you want a *sidebar* region to
+   navigate between your peoples, and a *content* region to represent a people. Now you can create this 
+   *layout* by creating file *src/html/layout/sidebar.html* like this:
+
+```html
+
+<aside data-region="sidebar"></aside>
+
+<section data-region="content"></section>
+
+```
+
+   now that you have your layout you should tell the builder to use it in people's pages so add the
+   layout property to the page object:
+
+```javascript
+['Paola','Maurizio','Andrea','Alessandro','Daniele','Matteo','Roberta','Elena']
+.forEach(function (person)
+{
+   page({ layout: 'sidebar', path: 'person/'+person.toLowerCase(), person: person });
+});
+```
+
+   as you can see the content of the layout is prepended to the body of the page (so that you can leave
+   the js at the end for instance). 
+
+ * Now that you have regions you can use them to place *blocks* and *templates*, lets add a sample peoples block to the page: create a *src/html/block/people.html* like this:
+
+```html
+
+ <ul>
+   <li><a href="/person/andrea.html">Andrea</a></li>
+   <li><a href="/person/matteo.html">Matteo</a></li>
+ </ul>
+
+```
+
+  and tell the builder you want it in the sidebar region (time to indent a bit): 
+
+```javascript
+['Paola','Maurizio','Andrea','Alessandro','Daniele','Matteo','Roberta','Elena']
+.forEach(function (person)
+{
+   page
+   ({ 
+        layout: 'sidebar', 
+        blocks: { sidebar: 'peoples' },
+        path: 'person/'+person.toLowerCase(),
+        person: person 
+   });
+});
+```
+
+  the syntax is:
+
+<pre>
+    blocks: { <region>: '<block>' }
+</pre>
+
+  or of course (to place multiple blocks in order)
+
+<pre>
+    blocks: { <region>: ['<block1>','<block2>',...] }
+</pre>
+
+ * so blocks are almost always static pieces of html that you want to reuse in various pages,
+   while templates are somenthing you use to render data, lets add template rendered after the peoples
+   block, create *src/html/template/person-menu.html*:
+
+```html
+
+    <ul>
+    {{for people}}
+     <li><a href="">{{>#data}}</a></li>
+    {{/for}}
+    </ul>
+
+```
+
+   and place it after the block calling the *template* function:
+
+
+```javascript
+var people= ['Paola','Maurizio','Andrea','Sandro','Daniele','Matteo','Roberta','Elena'];
+
+people.forEach(function (person)
+{
+   page
+   ({ 
+       layout: 'sidebar', 
+       blocks: { sidebar: ['peoples', template('person-menu',{ people: people })] },
+       path: 'person/'+person.toLowerCase(),
+       person: person
+   });
+});
+```
+
+  as you see we left the href attribute blank, wouldn't it be nice to have single place where
+  i create urls for a page? Yes, so:
+
+```javascript
+var people= ['Paola','Maurizio','Andrea','Sandro','Daniele','Matteo','Roberta','Elena'],
+    href= function (person)
+    {
+       return 'person/'+person.toLowerCase();
+    };
+
+people.forEach(function (person)
+{
+   page
+   ({ 
+       layout: 'sidebar', 
+       blocks: { sidebar: ['peoples', template('person-menu',{ people: people })] },
+       path: href(person),
+       href: href, // tell the builder to use this function to build hrefs to this page type
+       person: person
+   });
+});
+```
+
+   and now i can use the href converter in the template:
+
+
+```html
+
+    <ul>
+    {{for people}}
+     <li><a href="{{:~href('person',#data)}}">{{>#data}}</a></li>
+    {{/for}}
+    </ul>
+
+```
+
+  and voilà in any template that renders a person i can link it.. 
+
 
 ** ... doc in progress ...**
 
