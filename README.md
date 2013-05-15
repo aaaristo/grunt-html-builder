@@ -4,6 +4,9 @@ Assemble static HTML files in parallel using jquery, jsrender and *child_process
 starting from json (and xlsx) files to describe data (products, people... etc),
 all integrated in a maven like build lifecycle based on conventions against configuration.
 
+Actually we build a medium complexity site of ~4500 pages in ~120secs on a quad-core iMac,
+with SSD. That was really good enought to us.
+
 ## Getting Started
 Install this grunt plugin next to your project'
 
@@ -108,6 +111,7 @@ Things to document:
 * json collections
 * json trasformations
 * excel(xlsx) transformations
+* index / mindex / cache
 * html html
 * html layouts
 * html templates (jsrender)
