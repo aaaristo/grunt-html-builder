@@ -7,6 +7,8 @@ all integrated in a maven like build lifecycle based on conventions against conf
 Actually we build a medium complexity site of ~4500 pages in ~120secs on a quad-core iMac,
 with SSD.
 The same site built on an High-IO EC2 instance takes ~60secs for generation.
+By default we launch a builder for each core we detect so that they can build
+pages in parallel.
 
 ## Getting Started
 Install this grunt plugin next to your project'
@@ -120,6 +122,7 @@ Things to document:
 * postBuild hooks (enables you to modify the generated html with jquery before html file are written to disk)
 * client files (images,css,js...)
 * filtering pages
+* multi language support
 * s3 / cloudfront deploy
 
 ## Release History
