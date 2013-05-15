@@ -17,7 +17,8 @@ module.exports = function(grunt)
       p= require('path'),
       xmlbuilder = require("xmlbuilder"),
       forkqueue= require('./forkqueue'),
-      xlsx= require('./lib/xlsx');
+      xlsx= require('./lib/xlsx'),
+      argv = require('optimist').argv;
 
   var pageTypes= {},
       cache= {},
@@ -354,6 +355,7 @@ module.exports = function(grunt)
           }
           catch (ex)
           {
+              verbose.error(ex.stack);
               fail.fatal(ex+' evaluating '+src);
           }
       },
@@ -671,6 +673,20 @@ module.exports = function(grunt)
             grunt.file.write('dist/sitemap.xml',doc.toString({ pretty: true }));
             log.ok('Generated dist/sitemap.xml');
       },
+      _filterPages= function (pages)
+      {
+         var r= pages;
+
+         log.ok('Filtering pages...');
+
+         if (argv.pageType)
+           r= jsonpath(r,'$[?(@.config.name=="'+argv.pageType+'")]'); 
+
+         if (argv.pagePath)
+           r= jsonpath(r,'$[?(@.path.match('+argv.pagePath+'))]'); 
+
+         return r;
+      },
       _pages= function (config,done)
       {
          var pages= [],
@@ -731,6 +747,7 @@ module.exports = function(grunt)
               }
               catch (ex)
               {
+                  verbose.error(ex.stack);
                   fail.fatal(ex+' evaluating '+filepath);
               }
               
@@ -753,6 +770,8 @@ module.exports = function(grunt)
          {
              init.push(wconf);
          }); 
+
+         pages= _filterPages(pages); 
 
          log.ok('Launching builders...');
 
