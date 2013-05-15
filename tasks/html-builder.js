@@ -269,12 +269,13 @@ module.exports = function(grunt)
 
                   this.data.forEach(function (row,idx)
                   {
-                      if (idx==0) return true;
-
                       var obj= {},
                           _value= function (value)
                           {
-                             return value.value;
+                             if (value)
+                               return value.value;
+                             else
+                               return '';
                           },
                           _val= function (field,value)
                           {
@@ -292,7 +293,7 @@ module.exports = function(grunt)
                          _val(fields[i],row[i]); 
 
                       if (_transformFnc)
-                        obj= _transformFnc(obj);
+                        obj= _transformFnc(obj,idx);
                       
                       if (Array.isArray(obj))
                         r.concat(obj);
@@ -677,7 +678,8 @@ module.exports = function(grunt)
       {
          var r= pages;
 
-         log.ok('Filtering pages...');
+         if (argv.pageType||argv.pagePath)
+           log.ok('Filtering pages...');
 
          if (argv.pageType)
            r= jsonpath(r,'$[?(@.config.name=="'+argv.pageType+'")]'); 
