@@ -204,7 +204,7 @@ a look at how the builder builds your pages:
    *src/js/page/person.js* like this:
 
 ```javascript
-['Paola','Maurizio','Andrea','Alessandro','Daniele','Matteo','Roberta','Elena']
+['John','Jane','Dave','Mark']
 .forEach(function (person)
 {
    page({ path: 'person/'+person.toLowerCase(), person: person });
@@ -237,7 +237,7 @@ a look at how the builder builds your pages:
    layout property to the page object:
 
 ```javascript
-['Paola','Maurizio','Andrea','Alessandro','Daniele','Matteo','Roberta','Elena']
+['John','Jane','Dave','Mark']
 .forEach(function (person)
 {
    page({ layout: 'sidebar', path: 'person/'+person.toLowerCase(), person: person });
@@ -252,8 +252,8 @@ a look at how the builder builds your pages:
 ```html
 
  <ul>
-   <li><a href="/person/andrea.html">Andrea</a></li>
-   <li><a href="/person/matteo.html">Matteo</a></li>
+   <li><a href="/person/john.html">John</a></li>
+   <li><a href="/person/jane.html">Jane</a></li>
  </ul>
 
 ```
@@ -261,7 +261,7 @@ a look at how the builder builds your pages:
   and tell the builder you want it in the sidebar region (time to indent a bit): 
 
 ```javascript
-['Paola','Maurizio','Andrea','Alessandro','Daniele','Matteo','Roberta','Elena']
+['John','Jane','Dave','Mark']
 .forEach(function (person)
 {
    page
@@ -304,7 +304,7 @@ a look at how the builder builds your pages:
 
 
 ```javascript
-var people= ['Paola','Maurizio','Andrea','Sandro','Daniele','Matteo','Roberta','Elena'];
+var people= ['John','Jane','Dave','Mark'];
 
 people.forEach(function (person)
 {
@@ -322,7 +322,7 @@ people.forEach(function (person)
   i create urls for a page? Yes, so:
 
 ```javascript
-var people= ['Paola','Maurizio','Andrea','Sandro','Daniele','Matteo','Roberta','Elena'],
+var people= ['John','Jane','Dave','Mark'],
     href= function (person)
     {
        return 'person/'+person.toLowerCase();
