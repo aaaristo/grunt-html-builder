@@ -185,13 +185,14 @@ a look at how the builder builds your pages:
 2. it goes throught all the files in *src/js/page* to understand which pages to build
 3. your files tell him how many pages to build by simply calling the *page* function many times,
    to experiment try to change the *home.js* file to read:
-
-```javascript
-_(100).times(function (i)
-{
-   page({ path: 'index'+i });
-});
-```
+   
+   ```javascript
+   _(100).times(function (i)
+   {
+      page({ path: 'index'+i });
+   });
+   ```
+   
    yes... it dumbly creates 100 pages. But you now know you can use underscore.js in those files
    by default, and that the path attribute tells the builder which html files to create. There is
    another thing to note: all those pages from now on are of the same type for the builder, the type
