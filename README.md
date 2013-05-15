@@ -6,6 +6,7 @@ all integrated in a maven like build lifecycle based on conventions against conf
 
 Actually we build a medium complexity site of ~4500 pages in ~120secs on a quad-core iMac,
 with SSD.
+The same site built on an High-IO EC2 instance takes ~60secs for generation.
 
 ## Getting Started
 Install this grunt plugin next to your project'
