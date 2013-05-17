@@ -62,6 +62,40 @@ module.exports = function(grunt)
           var _process= function (arr)
           {
               var idx= {},
+                  _vals= function (obj,path)
+                  {
+                     var r= [],
+                         current= obj;
+
+                     if (Array.isArray(current)) 
+                     {
+                          current.forEach(function (el)
+                          {
+                             r.push.apply(r,_vals(el,path.slice(i+1)));
+                          });
+
+                          return r;
+                     }
+
+                     for (var i=0;i<path.length-1;i++)
+                     {
+                        current= current[path[i]]= current[path[i]];
+                        if (current===undefined) 
+                          return [];
+                        else
+                        if (Array.isArray(current)) 
+                          return _vals(current,path.slice(i+1));
+                     }
+
+                     var val= current[path[path.length-1]];
+
+                     if (Array.isArray(val))
+                       r.push.apply(r,val);
+                     else
+                       r.push(val);
+
+                     return r;
+                  },
                   _push= function (val,elem)
                   {
                       var vals;
@@ -71,15 +105,10 @@ module.exports = function(grunt)
 
               arr.forEach(function (elem)
               {
-                  var attr= elem[by];
-
-                  if (Array.isArray(attr))
-                    attr.forEach(function (val)
-                    {
+                  _vals(elem,by.split('.')).forEach(function (val)
+                  {
                        _push(val,elem);
-                    });
-                  else
-                    _push(attr,elem); 
+                  });
               });
 
               return (function (idx) { return function (by) { return idx[by] || []; } })(idx);
