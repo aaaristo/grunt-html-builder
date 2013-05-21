@@ -711,10 +711,10 @@ module.exports = function(grunt)
            log.ok('Filtering pages...');
 
          if (argv.pageType)
-           r= jsonpath(r,'$[?(@.config.name=="'+argv.pageType+'")]'); 
+           r= _.filter(r,function (p) { return p.config.name==argv.pageType; });
 
          if (argv.pagePath)
-           r= jsonpath(r,'$[?(@.path.match('+argv.pagePath+'))]'); 
+           r= _.filter(r,function (p) { return p.path.match(new RegExp(argv.pagePath)); });
 
          return r;
       },
