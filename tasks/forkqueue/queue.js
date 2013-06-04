@@ -30,6 +30,8 @@ Queue.prototype.addWorker = function() {
     self.handleMessage(m, worker);
   });
   worker.on('exit', function(code, signal) {
+    if (self.terminated) return;
+    console.log('error: worker '+worker.pid+' exited with code = '+code+', signal = '+signal);
     self.emit('error', 'error: worker '+worker.pid+' exited with code = '+code+', signal = '+signal);
   });
 };

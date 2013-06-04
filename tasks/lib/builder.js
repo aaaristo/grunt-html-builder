@@ -660,7 +660,7 @@ var evalFnc= function (str)
 
                       _page(p.path,p.lang,p.config,globalConfig,function ()
                       {
-                           done(null,p);
+                           done();
                       });
                    }
              };
@@ -682,8 +682,7 @@ process.on('message',function (message)
     }
     catch (ex)
     {
-        console.log(ex);
-        throw ex;
+        process.send({ error: true, ex: ex });
     }
 });
 

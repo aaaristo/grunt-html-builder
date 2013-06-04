@@ -813,6 +813,11 @@ module.exports = function(grunt)
              pageQueue.concat(init);
              pageQueue.concat(pages);
 
+             pageQueue.on('msg',function (message)
+             {
+                if (message.error) fail.fatal('Error from worker:',message.ex);
+             });
+
              pageQueue.end(function ()
              {
                 verbose.debug('Generated '+pages.length+' pages');
