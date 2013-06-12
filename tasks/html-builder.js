@@ -826,7 +826,7 @@ module.exports = function(grunt)
                     .att('xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance')
                     .att('xsi:schemaLocation', 'http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd');
              
-            pages.forEach(function (page)
+            _.filter(pages,function (p){ return !p.isRDF; }).forEach(function (page)
             {
                 root.ele('url')
                        .ele('loc')
