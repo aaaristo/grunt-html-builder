@@ -4,6 +4,9 @@ var grunt= require('grunt'),
     jquery= require('jquery-html'),
     jsonpath= require('JSONPath').eval,
     jsrender= require('../jsrender'),
+    xmlbuilder = require("xmlbuilder"),
+    rdfstore= require('../rdfstore'),
+    jsonld = require('jsonld'),
     xlsx= require('./xlsx');
     fs= require('fs'),
     util= require('util'),
@@ -47,7 +50,9 @@ var grunt= require('grunt'),
 var globalConfig,
     pageTypes,
     i18n,
-    cache= {};
+    cache= {},
+    store,
+    queries= {};
 
 var   _index= function(collection,by)
       {
@@ -89,6 +94,51 @@ var   _index= function(collection,by)
               });
 
               return (function (idx) { return function (by) { return idx[by] || []; } })(idx);
+          });
+      },
+      _toJSONLD= function (data,context)
+      {
+           var ld= _.clone(context),
+               transform= context['@transform'],
+               prefix= context['@id_prefix'] || '';
+
+           if (prefix in context['@context']) 
+             ld['@id']= context['@context'][prefix]+data['id'];
+           else
+             ld['@id']= prefix+data['id'];
+
+           var ld= _.extend(ld,data);
+
+           delete ld['@transform'];
+           delete ld['@id_prefix'];
+ 
+           if (transform) transform(ld,data,context);
+
+           return ld;
+      },
+      _context= function (name)
+      {
+          return _cache('context.'+name,function ()
+          {
+              try
+              {   
+                  var src= p.join('src','json','context',name+'.js'),
+                      js= file.read(src),
+                      _ctx;
+
+                  eval('(function (grunt,_,clone,collection,done) { '+js+' })')
+                      (grunt,_,_clone,_collection,
+                  function (ctx)
+                  {
+                      _ctx= ctx;
+                  });
+
+                  return _ctx;
+              }
+              catch (ex)
+              {
+                  fail.fatal(ex+' evaluating '+src);
+              }
           });
       },
       _cache= function (cid,process)
@@ -237,6 +287,18 @@ var   _index= function(collection,by)
                 }
             });
 
+            r.toJSONLD= function (context)
+            {
+                 var r= [];
+
+                 this.forEach(function (elem,i)
+                 {
+                      r.push(_toJSONLD(elem,context));
+                 });
+
+                 return r;
+            }
+
             return r.slice();
       },
       _parseExcel= function (src)
@@ -280,8 +342,8 @@ var   _index= function(collection,by)
               var src= p.join('src','js','transform',transformation+'.js'),
                   js= file.read(src);
 
-              eval('(function (grunt,_,clone,paginate,alias,collection,excel,json,index,mindex,done) { '+js+' })')
-                  (grunt,_,_clone,_paginate,_alias,_collection,_excel,data,_index,_mindex,
+              eval('(function (grunt,_,clone,paginate,alias,collection,excel,json,index,mindex,context,done) { '+js+' })')
+                  (grunt,_,_clone,_paginate,_alias,_collection,_excel,data,_index,_mindex,_context,
               function (transformed)
               {
                   data= transformed;
@@ -361,9 +423,70 @@ var   _index= function(collection,by)
                     }
                   else
                     return (lang&&lang!=defaultLanguage ? '/'+lang+'/' : '/')+pageType+'.html';
+             },
+             rdfa_prefixes= function ()
+             {
+                 try
+                 {
+                    var rdf= this.data.rdf;
+
+                    if (!rdf) return '';
+
+                    var ctx= this.data.rdf['@context'],
+                        prefixes= [];
+
+                     Object.keys(ctx).forEach(function (key)
+                     {
+                         var val= ctx[key];
+
+                         if (key.indexOf('@')==-1
+                             &&typeof val=='string'
+                             &&val.indexOf('http')==0) 
+                         {
+                           prefixes.push({ iri: val, prefix: key });
+                         }
+                     }); 
+
+                     if (prefixes.length>0)
+                       return ' prefix="'+_(prefixes).collect(function (p) { return p.prefix+': '+p.iri; }).join(' ')+'"';
+                     else
+                       return '';
+                 }
+                 catch (ex)
+                 {
+                    fail.fatal('Error generating RDFa prefixes: '+ex.message);
+                 }
+             },
+             rdfa_about= function ()
+             {
+                  var rdf= this.data.rdf;
+
+                  if (!rdf) return '';
+
+                  var expanded= rdf['@expanded'];
+
+                  return ' about="'+expanded['@id']+'"';
+             },
+             rdf_alternate= function ()
+             {
+                  var rdf= this.data.rdf;
+
+                  if (!rdf) return '';
+
+                  var expanded= rdf['@expanded']; 
+
+                  try
+                  {
+                      return '<link rel="alternate" type="application/rdf+xml" title="RDF Representation" href="'+
+                                expanded['http://www.w3.org/2000/01/rdf-schema#isDefinedBy'][0]['@id']+'" />';
+                  }
+                  catch (ex)
+                  {
+                    fail.fatal('Error generating RDF alternate link: '+ex.message);
+                  }
              };
 
-         jsrender.helpers({ href: href });
+         jsrender.helpers({ href: href, rdfa_prefixes: rdfa_prefixes, rdfa_about: rdfa_about, rdf_alternate: rdf_alternate });
 
          jsrender.converters
          ({
@@ -628,6 +751,179 @@ var evalFnc= function (str)
                  console.log(ex);
               }
     },
+    _triples= function (id,cb)
+    {
+         queries[id]= cb;    
+         process.send({ triples: true, id: id });
+    },
+    _rdf= function(path,lang,config,globalConfig,done)
+    {
+         var dest= p.join('dist',path+'.rdf'),
+             dest2= p.join('dist',path+'.jsonld'),
+             _jsonld= [_clone(config.rdf)],
+             context= config.rdf['@context'],
+             doc= xmlbuilder.create(),
+             root= doc.begin('RDF');
+
+         jsonld.expand(config.rdf,config.context,function (err,expanded)
+         {
+             if (err)
+               fail.fatal(err);
+
+             config.rdf['@expanded']= expanded[0];
+
+             var id= expanded[0]['@id'], prefixes= [];
+
+             Object.keys(context).forEach(function (key)
+             {
+                 var val= context[key];
+
+                 if (key.indexOf('@')==-1
+                     &&typeof val=='string'
+                     &&val.indexOf('http')==0) 
+                 {
+                   root.att('xmlns:'+key, val);
+                   prefixes.push({ iri: val, prefix: key });
+                 }
+             }); 
+                 
+             _triples(id,function (triples)
+             {
+                 var nodesBySubject= {};
+
+                 triples.forEach(function (node)
+                 {
+                      var _id= node.s ? node.s.value : id;
+
+                      if (!node.s)
+                        node.s= { token: 'uri', value: _id };
+
+                      if (!node.o)
+                        node.o= { token: 'uri', value: id };
+
+                      if (!nodesBySubject[_id]) nodesBySubject[_id]= [];
+
+                      nodesBySubject[_id].push(node);
+                 });
+
+                 var blanks= {},
+                     _normalize= function(s)
+                     {
+                        var mx=0, idx= -1;
+                       
+                        prefixes.forEach(function (prefix,i)
+                        {
+                           if (s.indexOf(prefix.iri)>-1&&prefix.iri.length>mx)
+                             idx= i;       
+                        }); 
+
+                        if (idx>-1)
+                          return s.replace(prefixes[idx].iri,prefixes[idx].prefix+':'); 
+                        else
+                          return s;
+                     },
+                     _tc= [], c= function () { var a= _tc.pop(); if(a)a.up(); },
+                     _predicate= function (par,node)
+                     {
+                        return par.ele(_normalize(node.p.value));
+                     },
+                     _node= function (par)
+                     {
+                        return function (node,done)
+                        {
+                                if (node.o.token=='uri')
+                                  _predicate(par,node).att('rdf:resource',node.o.value).up();
+                                else
+                                if (node.o.token=='literal')
+                                  _predicate(par,node).txt(node.o.value).up();
+                                else
+                                if (node.o.token=='blank')
+                                  _blank(node,par,done); 
+
+                                if (node.o.token!='blank')
+                                  done(); 
+                        }; 
+                     },
+                     _blank= function (node,par,done)
+                     {
+                        var f;
+
+                        if (!(f=blanks[node.o.value]))
+                        {
+                           c();
+                           var p= par.ele(_normalize(node.p.value));
+                           blanks[node.o.value]= f= _node(p);
+                           _tc.push(p);
+                        }
+
+                        f({ p: node.bp, o: node.bo },done);
+                     },
+                     _subject= function (id,done)
+                     {
+                         var desc= root.ele('rdf:Description')
+                                       .att('rdf:about',id);
+
+                         async.forEach(nodesBySubject[id],_node(desc),function ()
+                         {
+                            done();
+                         });
+
+                         c();
+                         c();
+
+                         desc.up();
+                     };
+
+                 var _addjsonld= function (nodes)
+                 {
+                    var ld= { '@id': nodes[0].s.value };
+
+                    nodes.forEach(function (node)
+                    {
+                        ld[node.p.value]= node.o.value;
+                        if (node.o.token=='uri')
+                          ld[node.p.value]= { '@id': node.o.value };
+                        else
+                        if (node.o.token=='literal')
+                          ld[node.p.value]= node.o.value;
+                    }); 
+
+                    _jsonld.push(ld);
+                 },
+                 _others= function ()
+                 {
+                         async.forEach(Object.keys(nodesBySubject),function (id,done)
+                         {
+                             _addjsonld(nodesBySubject[id]);
+                             _subject(id,done);
+                         },
+                         function ()
+                         {
+                             if (config.postBuild) config.postBuild(doc); 
+                             if (globalConfig.postRDFBuild) globalConfig.postRDFBuild(doc,config); 
+
+                             grunt.file.write(dest,doc.toString({ pretty: true }));
+                             log.ok('Generated RDF '+dest); 
+
+                             grunt.file.write(dest2,JSON.stringify(_jsonld,null,2));
+                             log.ok('Generated JSON-LD '+dest2); 
+
+                             done();
+                         });
+                 }
+
+                 if (nodesBySubject[id])
+                   _subject(id,function ()
+                   {
+                         delete nodesBySubject[id]; 
+                         _others();
+                   });
+                 else
+                   _others();
+             });
+
+         });
+    },
     methods= {
                    init: function (message,done)
                    {
@@ -658,10 +954,42 @@ var evalFnc= function (str)
                       if (p.config.href)
                         p.config.href= evalFnc(p.config.href);
 
-                      _page(p.path,p.lang,p.config,globalConfig,function ()
+                      if (p.config.rdf)
+                         jsonld.expand(p.config.rdf,{ '@context': p.config['@context'] },function (err,expanded)
+                         {
+                             if (err)
+                               fail.fatal(err);
+
+                             p.config.rdf['@expanded']= expanded[0];
+
+                             _page(p.path,p.lang,p.config,globalConfig,function ()
+                             {
+                                   done();
+                             });
+
+                         });
+                      else
+                          _page(p.path,p.lang,p.config,globalConfig,function ()
+                          {
+                               done();
+                          });
+                   },
+                   rdf: function (p,done)
+                   {
+                      if (p.config.postBuild)
+                        p.config.postBuild= evalFnc(p.config.postBuild);
+
+                      if (p.config.href)
+                        p.config.href= evalFnc(p.config.href);
+
+                      _rdf(p.path,p.lang,p.config,globalConfig,function ()
                       {
                            done();
                       });
+                   },
+                   triples: function (message)
+                   {
+                       queries[message.id](message.triples);
                    }
              };
 
@@ -678,11 +1006,17 @@ process.on('message',function (message)
        if (message.init)
          methods.init(message,next);
        else
+       if (message.isRDF)
+         methods.rdf(message,next);
+       else
+       if (message.triples)
+         methods.triples(message);
+       else
          methods.page(message,next);
     }
     catch (ex)
     {
-        process.send({ error: true, ex: ex });
+        process.send({ error: true, ex: ex+'' });
     }
 });
 

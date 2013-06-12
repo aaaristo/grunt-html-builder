@@ -11,6 +11,7 @@ module.exports = function(grunt)
   var jquery= require('jquery-html'),
       jsonpath= require('JSONPath').eval,
       jsrender= require('./jsrender'),
+      rdfstore= require('./rdfstore'),
       fs= require('fs'),
       os= require('os'),
       util= require('util'),
@@ -23,7 +24,8 @@ module.exports = function(grunt)
   var pageTypes= {},
       cache= {},
       i18n,
-      pageQueue;
+      pageQueue,
+      store;
 
   var log= grunt.log,
       verbose= grunt.log.verbose,
@@ -34,6 +36,62 @@ module.exports = function(grunt)
       mem= function ()
       {
          return util.inspect(process.memoryUsage());
+      },
+      _toJSONLD= function (data,context)
+      {
+           var ld= _.clone(context),
+               transform= context['@transform'],
+               prefix= context['@id_prefix'] || '';
+
+           if (prefix in context['@context']) 
+             ld['@id']= context['@context'][prefix]+data['id'];
+           else
+             ld['@id']= prefix+data['id'];
+
+           var ld= _.extend(ld,data);
+
+           delete ld['@transform'];
+           delete ld['@id_prefix'];
+ 
+           if (transform) transform(ld,data,context);
+
+           return ld;
+      },
+      _store= function (cb)
+      {
+         if (store==null)
+           rdfstore.create(function (s)
+           {
+              store= s;
+              cb(s);
+           });
+         else
+           cb(store);
+      },
+      _context= function (name)
+      {
+          return _cache('context.'+name,function ()
+          {
+              try
+              {   
+                  var src= p.join('src','json','context',name+'.js'),
+                      js= file.read(src),
+                      _ctx;
+
+                  eval('(function (grunt,_,clone,collection,done) { '+js+' })')
+                      (grunt,_,_clone,_collection,
+                  function (ctx)
+                  {
+                      _ctx= ctx;
+                  });
+
+                  return _ctx;
+              }
+              catch (ex)
+              {
+                  fail.fatal(ex+' evaluating '+src);
+              }
+          });
       },
       _index= function(collection,by)
       {
@@ -268,6 +326,18 @@ module.exports = function(grunt)
                 }
             });
 
+            r.toJSONLD= function (context)
+            {
+                 var r= [];
+
+                 this.forEach(function (elem,i)
+                 {
+                      r.push(_toJSONLD(elem,context));
+                 });
+
+                 return r;
+            }
+
             return r;
       },
       _parseExcel= function (src)
@@ -374,8 +444,8 @@ module.exports = function(grunt)
               var src= p.join('src','js','transform',transformation+'.js'),
                   js= file.read(src);
 
-              eval('(function (grunt,_,clone,paginate,alias,collection,excel,json,index,mindex,done) { '+js+' })')
-                  (grunt,_,_clone,_paginate,_alias,_collection,_excel,data,_index,_mindex,
+              eval('(function (grunt,_,clone,paginate,alias,collection,excel,json,index,mindex,context,done) { '+js+' })')
+                  (grunt,_,_clone,_paginate,_alias,_collection,_excel,data,_index,_mindex,_context,
               function (transformed)
               {
                   data= transformed;
@@ -455,9 +525,70 @@ module.exports = function(grunt)
                     }
                   else
                     return (lang&&lang!=defaultLanguage ? '/'+lang+'/' : '/')+pageType+'.html';
+             },
+             rdfa_prefixes= function ()
+             {
+                 try
+                 {
+                    var rdf= this.data.rdf;
+
+                    if (!rdf) return '';
+
+                    var ctx= this.data.rdf['@context'],
+                        prefixes= [];
+
+                     Object.keys(ctx).forEach(function (key)
+                     {
+                         var val= ctx[key];
+
+                         if (key.indexOf('@')==-1
+                             &&typeof val=='string'
+                             &&val.indexOf('http')==0) 
+                         {
+                           prefixes.push({ iri: val, prefix: key });
+                         }
+                     }); 
+
+                     if (prefixes.length>0)
+                       return ' prefix="'+_(prefixes).collect(function (p) { return p.prefix+': '+p.iri; }).join(' ')+'"';
+                     else
+                       return '';
+                 }
+                 catch (ex)
+                 {
+                    fail.fatal('Error generating RDFa prefixes: '+ex.message);
+                 }
+             },
+             rdfa_about= function ()
+             {
+                  var rdf= this.data.rdf;
+
+                  if (!rdf) return '';
+
+                  var expanded= rdf['@expanded'];
+
+                  return ' about="'+expanded['@id']+'"';
+             },
+             rdf_alternate= function ()
+             {
+                  var rdf= this.data.rdf;
+
+                  if (!rdf) return '';
+
+                  var expanded= rdf['@expanded']; 
+
+                  try
+                  {
+                      return '<link rel="alternate" type="application/rdf+xml" title="RDF Representation" href="'+
+                                expanded['http://www.w3.org/2000/01/rdf-schema#isDefinedBy'][0]['@id']+'" />';
+                  }
+                  catch (ex)
+                  {
+                    fail.fatal('Error generating RDF alternate link: '+ex.message);
+                  }
              };
 
-         jsrender.helpers({ href: href });
+         jsrender.helpers({ href: href, rdfa_prefixes: rdfa_prefixes, rdfa_about: rdfa_about, rdf_alternate: rdf_alternate });
 
          jsrender.converters
          ({
@@ -496,6 +627,16 @@ module.exports = function(grunt)
                href: href
          });
 
+      },
+      _triples= function (id,cb)
+      {
+         store.execute("SELECT ?s ?p ?o ?bp ?bo WHERE { { <"+id+"> ?p ?o . filter(!isblank(?o)) } UNION { <"+id+"> ?p ?o . OPTIONAL { ?o ?bp ?bo } filter(isblank(?o)) }  UNION { ?s ?p <"+id+"> } }", function (success, nodes) 
+         {
+             if (!success)
+               fail.fatal('Cannot query RDF store for id: '+id);
+
+             cb(nodes);
+         });
       },
       _page= function(path,lang,config,globalConfig,done)
       {   
@@ -769,12 +910,29 @@ module.exports = function(grunt)
                                 name: name,
                                 data: data
                              };
+                  },
+                  addRdf= function (config)
+                  {
+                      config.rdf= _toJSONLD(config.data,config.context);
+
+                      _store(function (store)
+                      {
+                            store.load('application/json', config.rdf, function(success, loaded)
+                            {
+                                if (!success)
+                                  fail.fatal('Cannot load RDF for: '+JSON.stringify(rdf));
+                            });
+                      });
+
+                      pages.push({ path: config.path, config: config, isRDF: true });
+
+                      return config.rdf;
                   };
 
               try
               {   
-                  eval('(function (page,block,paginate,template,collection,excel,transform,chunkdata,alias,jsonpath,index,mindex) { '+js+' })')
-                                  (addPage,_blockText,_paginate,template,_collection,_excel,_transform,_chunkdata,_alias,jsonpath,_index,_mindex);
+                  eval('(function (page,rdf,block,paginate,template,collection,excel,transform,chunkdata,alias,jsonpath,index,mindex,context) { '+js+' })')
+                                  (addPage,addRdf,_blockText,_paginate,template,_collection,_excel,_transform,_chunkdata,_alias,jsonpath,_index,_mindex,_context);
               }
               catch (ex)
               {
@@ -813,9 +971,16 @@ module.exports = function(grunt)
              pageQueue.concat(init);
              pageQueue.concat(pages);
 
-             pageQueue.on('msg',function (message)
+             pageQueue.on('msg',function (message, worker)
              {
-                if (message.error) fail.fatal('Error from worker:',message.ex);
+                if (message.error)
+                  fail.fatal('Error from worker:'+message.ex);
+                else
+                if (message.triples)
+                  _triples(message.id,function (triples)
+                  {
+                       worker.send({ id: message.id, triples: triples });
+                  });
              });
 
              pageQueue.end(function ()

@@ -69,7 +69,7 @@ Queue.prototype.flush = function() {
 
 Queue.prototype.handleMessage = function(message, worker) {
   if (this.terminated) return;
-  if (message !== 'next') return this.emit('msg', message);
+  if (message !== 'next') return this.emit('msg', message, worker);
   // message = 'next'
 
   this.waiting.push(worker);
