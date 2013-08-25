@@ -14,8 +14,8 @@ pages in parallel.
 
 Building web sites often you find your self using a CMS,
 integrating it with some legacy/es, tuning web servers, application servers, databases,
-and when it is not enough, go back to the code and squeeze anything you can, and of
-course put some kind of caching around, often more than one type, and of course
+and when it is not enough, go back to the code and squeeze anything you can, and put some kind 
+of caching around, often more than one type, and of course
 keep those caches in sync. This is a pretty full contact sport.
 
 The thing i always noticed doing that is that all this work often is about producing
