@@ -10,6 +10,29 @@ The same site built on an High-IO EC2 instance takes ~60secs for generation.
 By default we launch a builder for each core we detect so that they can build
 pages in parallel.
 
+## Why?
+
+Building web sites often you find your self using a CMS,
+integrating it with some legacy/es, tuning web servers, application servers, databases,
+and when it is not enough, go back to the code and squeeze anything you can, and of
+course put some kind of caching around, often more than one type, and of course
+keep those caches in sync. This is a pretty full contact sport.
+
+The thing i always noticed doing that is that all this work often is about producing
+a file or memory buffer (depending on wich caching type you use) containing the content 
+being actually served to the user.
+
+So the typical runtime flow of a MISS request would be:
+
+user request > build the buffer hocus pocus > cache > response
+
+This is really about having users pull your pages. Why dont'we push
+the site to the user?
+
+do the hocus pocus/integrations batch > put pages on a CDN near the user < have the user acces things fast
+
+Obviously not all sites may be done like that, but many could, saving you a lot of time.
+
 ## Getting Started
 Install this grunt plugin next to your project'
 
@@ -375,6 +398,7 @@ Things to document:
 * filtering pages
 * multi language support
 * s3 / cloudfront deploy
+* RDF / jsonld support
 
 ## Release History
 * 2013-05-15   v0.4.20   First documented BETA release
