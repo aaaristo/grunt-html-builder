@@ -405,4 +405,4 @@ Things to document:
 
 ## License
 Copyright (c) 2013 Andrea Amerigo Aristodemo Gariboldi  
-Licensed under the MIT license.
+Licensed under the Apache2 license.
