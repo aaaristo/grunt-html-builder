@@ -30640,7 +30640,7 @@ QueryEngine.QueryEngine.prototype.registerDefaultNamespace = function(ns, prefix
 var MongodbQueryEngine = {};
 
 //imports
-var mongodb = require('mongodb');
+var mongodb; //require('mongodb');
 
 MongodbQueryEngine.mongodb = true;
 
