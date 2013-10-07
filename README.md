@@ -367,7 +367,7 @@ people.forEach(function (person)
    and now i can use the href converter in the template:
 
 
-```html
+```html 
 
     <ul>
     {{for people}}
@@ -376,9 +376,34 @@ people.forEach(function (person)
     </ul>
 
 ```
+ 
+   and voilà in any template that renders a person i can link it.. 
+   
+   You can also use a *postBuild* hook to modify generator results:
 
-  and voilà in any template that renders a person i can link it.. 
+```javascript
+var people= ['John','Jane','Dave','Mike'],
+    href= function (person)
+    {
+       return 'person/'+person.toLowerCase();
+    };
 
+people.forEach(function (person)
+{
+   page
+   ({ 
+       layout: 'sidebar', 
+       blocks: { sidebar: ['peoples', template('person-menu',{ people: people })] },
+       path: href(person),
+       href: href, // tell the builder to use this function to build hrefs to this page type
+       person: person,
+       postBuild: function ($) // this function is serialized and sent to builder processes
+       {
+          $('body').addClass(this.person); // so you have to put any data in the page object to reference it
+       }
+   });
+});
+```
 
 ** ... doc in progress ...**
 
