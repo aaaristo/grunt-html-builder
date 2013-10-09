@@ -1,3 +1,4 @@
+[![Stories in Ready](https://badge.waffle.io/aaaristo/grunt-html-builder.png?label=ready)](https://waffle.io/aaaristo/grunt-html-builder)  
 # grunt-html-builder [![Build Status](https://secure.travis-ci.org/aaaristo/grunt-html-builder.png?branch=master)](http://travis-ci.org/aaaristo/grunt-html-builder)
 
 Assemble static HTML files in parallel using jquery, jsrender and *child_process* nodejs module,
@@ -377,7 +378,7 @@ people.forEach(function (person)
 
 ```
  
-   and voilà in any template that renders a person i can link it.. 
+   and voilC  in any template that renders a person i can link it.. 
    
    You can also use a *postBuild* hook to modify generator results:
 
@@ -426,7 +427,7 @@ Things to document:
 * RDF / jsonld support
 
 ## Release History
-* 2013-05-15   v0.4.20   First documented BETA release
+* 2013-05-15b b b v0.4.20b b b First documented BETA release
 
 ## License
 Copyright (c) 2013 Andrea Amerigo Aristodemo Gariboldi  
