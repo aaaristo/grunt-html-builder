@@ -431,3 +431,7 @@ Things to document:
 ## License
 Copyright (c) 2013 Andrea Amerigo Aristodemo Gariboldi  
 Licensed under the Apache2 license.
+
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/aaaristo/grunt-html-builder/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+
