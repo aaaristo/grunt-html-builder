@@ -45,6 +45,7 @@ grunt.loadNpmTasks('grunt-html-builder');
 [grunt]: http://gruntjs.com/
 
 ## Documentation
+
 The simplest way to get started is:
 <pre>
 $ git clone git://github.com/aaaristo/html-builder-sample.git
@@ -404,6 +405,12 @@ people.forEach(function (person)
    });
 });
 ```
+
+## Foundation 5 starter kit
+
+here you can find a useful starter kit that uses Zurb Foundation as a Front-end framework
+
+[https://github.com/signalkuppe/grunt-foundation5](https://github.com/signalkuppe/grunt-foundation5)
 
 ** ... doc in progress ...**
 
