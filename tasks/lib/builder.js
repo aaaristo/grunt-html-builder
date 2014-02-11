@@ -465,7 +465,7 @@ var   _index= function(collection,by)
 
                   var expanded= rdf['@expanded'];
 
-                  return ' about="'+expanded['@id']+'"';
+                  return ' about="'+expanded['@id']+'" typeof="'+expanded['http://www.w3.org/1999/02/22-rdf-syntax-ns#type'][0]['@id']+'"';
              },
              rdf_alternate= function ()
              {
