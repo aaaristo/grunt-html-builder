@@ -10,6 +10,11 @@ The same site built on an High-IO EC2 instance takes ~60secs for generation.
 By default we launch a builder for each core we detect so that they can build
 pages in parallel.
 
+***NOTE:*** as of 0.5.0, we dropped JSDOM to use [cheerio](https://github.com/MatthewMueller/cheerio),
+and generated a complex site of 11208 pages on an AWS EC2 i2.8xlarge in 24secs. 
+Unfortunately cheerio does not support pseudo selectors like :eq, :odd, :even,
+but you can use the function version like this: $(..).eq(1) or $(..).odd()...
+
 ## Why?
 
 Building web sites often you find your self using a CMS,
