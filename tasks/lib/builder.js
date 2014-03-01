@@ -47,6 +47,11 @@ var grunt= require('grunt'),
          return util.inspect(process.memoryUsage());
     };
 
+grunt.option('verbose',_.contains(process.argv,'--verbose'));
+grunt.option('debug',_.contains(process.argv,'--debug'));
+grunt.option('stack',_.contains(process.argv,'--stack'));
+
+
 cheerio.prototype.odd = function() {
     var odds = [];
     this.each(function(index, item) {
