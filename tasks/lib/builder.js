@@ -1,12 +1,12 @@
 const ID= process.argv[2];
 
 var grunt= require('grunt'),
-    jquery= require('jquery-html'),
+    cheerio= require('cheerio'),
     jsonpath= require('JSONPath').eval,
     jsrender= require('../jsrender'),
     xmlbuilder = require("xmlbuilder"),
     rdfstore= require('../rdfstore'),
-    jsonld = require('jsonld'),
+    jsonld = require('../jsonld'),
     xlsx= require('./xlsx');
     fs= require('fs'),
     util= require('util'),
@@ -46,6 +46,28 @@ var grunt= require('grunt'),
     {
          return util.inspect(process.memoryUsage());
     };
+
+cheerio.prototype.odd = function() {
+    var odds = [];
+    this.each(function(index, item) {
+        if (index % 2 == 1) {
+            odds.push(item);
+        }
+    });
+
+    return cheerio(odds);
+};
+
+cheerio.prototype.even = function() {
+    var evens = [];
+    this.each(function(index, item) {
+        if (index % 2 == 0) {
+            evens.push(item);
+        }
+    });
+
+    return cheerio(evens);
+};
 
 var globalConfig,
     pageTypes,
@@ -537,12 +559,12 @@ var   _index= function(collection,by)
              _data= function ($elem)
              {
                 var name= $elem.data('collection');
-                
+
                 if (name)
                 {
                    var data= _collection(name),
                        chunk= $elem.data('chunk'),
-                       chunkSize= $elem.data('chunk-size'),
+                       chunkSize= $elem.attr('data-chunk-size'),
                        path= $elem.data('path'),
                        transform= $elem.data('transform');
 
@@ -552,9 +574,9 @@ var   _index= function(collection,by)
                    if (path)
                    {
                       var res= jsonpath(data,path),
-                          distinct= $elem.data('path-distinct');
+                          distinct= $elem.attr('data-path-distinct');
 
-                      if (distinct)
+                      if (typeof distinct!='undefined')
                       {
                          var map= {};
                          res.forEach(function (r)
@@ -579,7 +601,7 @@ var   _index= function(collection,by)
              {
                 try
                 {
-                   return $(text);
+                   return $.load(text).root();
                 }
                 catch (ex)
                 {
@@ -598,7 +620,20 @@ var   _index= function(collection,by)
              },
              _block= function (name,done)
              {
-                var $content;
+                var $content,
+                    renderTemplate= function ()
+                    {
+                       var $container= $(this),
+                           name= $container.data('template');
+
+                       if (!name) return;
+
+                       var tpl= _template(name),
+                           data= _data($container);
+
+                       if (data)
+                         $container.append(tpl.render(data));
+                    };
 
                 if (typeof name=='string')
                     $content= _$e(_blockText(name,lang));
@@ -606,21 +641,14 @@ var   _index= function(collection,by)
                     $content= _$e(_resolveTemplates(name)); 
 
                 if (typeof $content!='string')
-                $content.find('[data-template]').andSelf().each(function ()
                 {
-                   var $container= $(this),
-                       name= $container.data('template');
+                  if (typeof $content.attr('data-template')!='undefined')
+                    $content.each(renderTemplate);
 
-                   if (!name) return;
+                  $content.find('[data-template]').each(renderTemplate);
+                }
 
-                   var tpl= _template(name),
-                       data= _data($container);
-
-                   if (data)
-                     $container.append(tpl.render(data));
-                });
-
-                done({ content: $content });
+                done({ content: $content.contents() });
              },
              _region= function (region,done)
              {
@@ -686,55 +714,49 @@ var   _index= function(collection,by)
                    $body.attr('data-module',config.name);
 
                  async.forEachSeries([globalConfig,config],_regions,done);
+             },
+             _source= function ()
+             {
+                return $.html().replace(/xscript/g,'script');
              };
 
 
-         jquery.create(html,function (window,jQuery,free)
+         $= cheerio.load(html);
+         verbose.debug(mem(),'Generating page '+dest);
+
+         _build(function ()
          {
-             verbose.debug(mem(),'Generating page '+dest);
-             window.execScript= function () {}; // disables jquery script evaluation
-             $= jQuery;
-
-             var _source= function ()
+             try
              {
-                return jquery.source(window).replace(/xscript/g,'script');
-             };
-
-             _build(function ()
+                 if (config.postBuild) 
+                   config.postBuild($,lang); 
+             }
+             catch (ex)
              {
-                 try
-                 {
-                     if (config.postBuild) 
-                       config.postBuild($,lang); 
-                 }
-                 catch (ex)
-                 {
-                    fail.fatal('error in page type "'+config.name+'" postBuild function: '+ex);
-                 }
- 
-                 try
-                 {
-                     if (globalConfig.postBuild) 
-                       globalConfig.postBuild($,lang,config);
-                 }
-                 catch (ex)
-                 {
-                    fail.fatal('error in global postBuild function: '+ex);
-                 }
-                
-                 try
-                 { 
-                    grunt.file.write(dest,_source());
-                 }
-                 catch (ex) // retry
-                 {
-                    grunt.file.write(dest,_source());
-                 }
+                fail.fatal('error in page type "'+config.name+'" postBuild function: '+ex);
+             }
 
-                 (lang!==defaultLanguage ? verbose : log).ok('Generated page '+dest); 
-                 free();
-                 done();
-             });
+             try
+             {
+                 if (globalConfig.postBuild) 
+                   globalConfig.postBuild($,lang,config);
+             }
+             catch (ex)
+             {
+                fail.fatal('error in global postBuild function: '+ex);
+             }
+            
+             try
+             { 
+                grunt.file.write(dest,_source());
+             }
+             catch (ex) // retry
+             {
+                grunt.file.write(dest,_source());
+             }
+
+             (lang!==defaultLanguage ? verbose : log).ok('Generated page '+dest); 
+             done();
          });
 
       };
@@ -748,7 +770,7 @@ var evalFnc= function (str)
               }
               catch (ex)
               {
-                 console.log(ex);
+                 console.log(ex,ex.stack);
               }
     },
     _triples= function (id,cb)

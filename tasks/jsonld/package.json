@@ -1,0 +1,58 @@
+{
+  "name": "jsonld",
+  "version": "0.0.64",
+  "description": "A JSON-LD Processor and API implementation in JavaScript.",
+  "homepage": "http://github.com/digitalbazaar/jsonld.js",
+  "author": {
+    "name": "Digital Bazaar, Inc.",
+    "email": "support@digitalbazaar.com",
+    "url": "http://digitalbazaar.com/"
+  },
+  "contributors": [
+    {
+      "name": "Dave Longley",
+      "email": "dlongley@digitalbazaar.com"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/digitalbazaar/jsonld.js"
+  },
+  "bugs": {
+    "url": "https://github.com/digitalbazaar/jsonld.js/issues",
+    "email": "support@digitalbazaar.com"
+  },
+  "main": "js/jsonld.js",
+  "dependencies": {
+    "async": "~0.2.6",
+    "commander": "~1.3.0",
+    "jsdom": "~0.7.0",
+    "pkginfo": "~0.3.0",
+    "request": "~2.22.0",
+    "xmldom": "0.1.16"
+  },
+  "devDependencies": {
+    "mocha": "~1.12.0",
+    "visionmedia-jscoverage": "~1.0.0"
+  },
+  "engines": {
+    "node": "*"
+  },
+  "keywords": [
+    "JSON",
+    "Linked Data",
+    "JSON-LD",
+    "RDF",
+    "Semantic Web"
+  ],
+  "bin": {
+    "jsonld": "./bin/jsonld"
+  },
+  "scripts": {
+    "test": "make test"
+  },
+  "readme": "Introduction\n------------\n\nJSON, as specified in RFC4627, is a simple language for representing\nobjects on the Web. Linked Data is a way of describing content across\ndifferent documents or Web sites. Web resources are described using\nIRIs, and typically are dereferencable entities that may be used to find\nmore information, creating a \"Web of Knowledge\". JSON-LD is intended to\nbe a simple publishing method for expressing not only Linked Data in\nJSON, but for adding semantics to existing JSON.\n\nThis library is an implementation of the [JSON-LD] specification\nin JavaScript.\n\nJSON-LD is designed as a light-weight syntax that can be used to express\nLinked Data. It is primarily intended to be a way to express Linked Data\nin Javascript and other Web-based programming environments. It is also\nuseful when building interoperable Web Services and when storing Linked\nData in JSON-based document storage engines. It is practical and\ndesigned to be as simple as possible, utilizing the large number of JSON\nparsers and existing code that is in use today. It is designed to be\nable to express key-value pairs, RDF data, RDFa [RDFA-CORE] data,\nMicroformats [MICROFORMATS] data, and Microdata [MICRODATA]. That is, it\nsupports every major Web-based structured data model in use today.\n\nThe syntax does not require many applications to change their JSON, but\neasily add meaning by adding context in a way that is either in-band or\nout-of-band. The syntax is designed to not disturb already deployed\nsystems running on JSON, but provide a smooth migration path from JSON\nto JSON with added semantics. Finally, the format is intended to be fast\nto parse, fast to generate, stream-based and document-based processing\ncompatible, and require a very small memory footprint in order to operate.\n\nUsing the Command-line Tool\n---------------------------\n\nThe jsonld command line tool can be used to:\n\n * Transform JSON-LD to compact, expanded, normalized, or flattened form\n * Transform RDFa to JSON-LD\n * Normalize JSON-LD/RDFa Datasets to NQuads\n\nTo install the tool, do the following (you will need git, nodejs, and\nnpm installed):\n\n    git clone https://github.com/digitalbazaar/jsonld.js.git\n    cd jsonld.js\n    npm install\n\nTo compact a document on the Web using a JSON-LD context published on\nthe Web:\n\n    ./bin/jsonld compact -c \"http://w3id.org/payswarm/v1\" \"http://recipes.payswarm.com/?p=10554\"\n\nThe command above will read in a PaySwarm Asset and Listing in RDFa 1.0 format, \nconvert it to JSON-LD expanded form, compact it using the \n'http://w3id.org/payswarm/v1' context, and dump it out to the console in \ncompacted form.\n\n    ./bin/jsonld normalize -q \"http://recipes.payswarm.com/?p=10554\"\n\nThe command above will read in a PaySwarm Asset and Listing in RDFa 1.0 format,\nnormalize the data using the RDF Dataset normalization algorithm, and\nthen dump the output to normalized NQuads format. The NQuads can then be\nprocessed via SHA-256, or similar algorithm, to get a deterministic hash\nof the contents of the Dataset.\n\nCommercial Support\n------------------\n\nCommercial support for this library is available upon request from \nDigital Bazaar: support@digitalbazaar.com\n\nSource\n------\n\nThe source code for the JavaScript implementation of the JSON-LD API\nis available at:\n\nhttp://github.com/digitalbazaar/jsonld.js\n\nTests\n-----\n\nThis library includes a sample testing utility which may be used to verify\nthat changes to the processor maintain the correct output.\n\nTo run the sample tests you will need to get the test suite files by cloning\nthe [json-ld.org repository][json-ld.org] hosted on GitHub.\n\nhttps://github.com/json-ld/json-ld.org\n\nIf the json-ld.org directory is a sibling of the jsonld.js directory:\n\n    make test\n\nIf you installed the test suite elsewhere:\n\n    make test JSONLD_TEST_SUITE={PATH_TO_YOUR_JSON_LD_ORG}/test-suite}\n\nCode coverage output can be generated in `coverage.html`:\n\n    make test-cov\n\nThe Mocha output reporter can be changed to min, dot, list, nyan, etc:\n\n    make test REPORTER=dot\n\nRemote context tests are also available:\n\n    # run the context server in the background or another terminal\n    node tests/remote-context-server.js\n\n    make test JSONLD_TEST_SUITE=./tests\n\n[JSON-LD]: http://json-ld.org/\n[json-ld.org]: https://github.com/json-ld/json-ld.org\n\n",
+  "readmeFilename": "README.md",
+  "_id": "jsonld@0.0.64",
+  "_from": "jsonld@~0.0.58"
+}
