@@ -1,6 +1,6 @@
 var grunt = require('grunt'),
     path = require('path'),
-    jquery= require('jquery-html');
+    cheerio= require('cheerio');
 
 var file= grunt.file;
 
@@ -23,12 +23,10 @@ helper.$file= function (p,cb,done)
       var src= path.join(helper.fixtures, p);
 
       if (file.exists(src))
-        jquery.create(file.read(src),function (window,$,free)
-        {
-              cb(window,$);
-              free(); 
-              done();
-        });
+      {
+        cb(cheerio.load(file.read(src)));
+        done();
+      }
       else
       {
         grunt.log.error('file "'+src+'" not found');
