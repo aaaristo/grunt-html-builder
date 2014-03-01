@@ -762,7 +762,7 @@ var   _index= function(collection,by)
                 grunt.file.write(dest,_source());
              }
 
-             (lang!==defaultLanguage ? verbose : log).ok('Generated page '+dest); 
+             (lang&&lang!==defaultLanguage ? verbose : log).ok('Generated page '+dest); 
              done();
          });
 
@@ -1052,13 +1052,13 @@ var _json= [], receive= function (message)
 
 process.stdin.on('data',function (chunk)
 {
-console.log(chunk);
     _json.push(chunk);  
 });
 
+process.stdin.resume();
+
 process.on('message',function (message)
 {
-console.log(message);
      (function _try()
      {
              try

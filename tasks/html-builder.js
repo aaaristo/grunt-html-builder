@@ -685,7 +685,7 @@ module.exports = function(grunt)
 
              pageQueue.end(function ()
              {
-                verbose.debug('Generated '+pages.length+' pages');
+                log.ok('Generated '+pages.length+' pages');
                 if (globalConfig.sitemap) _sitemap(globalConfig,pages);
                 done();
              });
@@ -715,7 +715,7 @@ module.exports = function(grunt)
           var diff= process.hrtime(time),
               secs= Math.round((diff[0]*1e9+diff[1])/1e9);
           cache= {};
-          verbose.debug('Stopping after '+secs+'secs, mem used ~'+Math.round(process.memoryUsage().rss/1024/1024)+'MB');
+          log.ok('Stopping after '+secs+'secs, mem used ~'+Math.round(process.memoryUsage().rss/1024/1024)+'MB');
           done();
      });
   });

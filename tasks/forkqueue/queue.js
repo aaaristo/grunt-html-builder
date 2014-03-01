@@ -26,6 +26,8 @@ Queue.prototype.addWorker = function() {
   var args= process.argv.slice(3);
   args.unshift(this.workers.length);
   var worker = cp.fork(this.workerModule,args,{ silent: true });
+  process.stdout.setMaxListeners(0);
+  process.stderr.setMaxListeners(0);
   worker.stdout.pipe(process.stdout);
   worker.stderr.pipe(process.stderr);
   worker.stdin.on('drain',function ()
