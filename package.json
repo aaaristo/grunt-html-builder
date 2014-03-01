@@ -1,7 +1,7 @@
 {
   "name": "grunt-html-builder",
   "description": "Build HTML sites",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "homepage": "https://github.com/aaaristo/grunt-html-builder",
   "author": {
     "name": "Andrea Amerigo Aristodemo Gariboldi",
