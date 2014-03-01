@@ -1052,11 +1052,13 @@ var _json= [], receive= function (message)
 
 process.stdin.on('data',function (chunk)
 {
+console.log(chunk);
     _json.push(chunk);  
 });
 
 process.on('message',function (message)
 {
+console.log(message);
      (function _try()
      {
              try

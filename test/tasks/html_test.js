@@ -55,6 +55,7 @@ exports['html'] = {
     ([],
       function(result) 
       {
+console.log(result);
 
           test.ok(result.indexOf('Generated page dist/index.html') !== -1, 'page index created');
 
