@@ -2,6 +2,8 @@ const ID= process.argv[2];
 
 var grunt= require('grunt'),
     cheerio= require('cheerio'),
+    net = require('net');
+    msgpack= require('msgpack'),
     jsonpath= require('JSONPath').eval,
     jsrender= require('../jsrender'),
     xmlbuilder = require("xmlbuilder"),
@@ -1020,7 +1022,7 @@ var evalFnc= function (str)
                    }
              };
 
-process.on('message',function (message)
+var _json= [], receive= function (message)
 {
     var next= function (err, message)
     {
@@ -1045,6 +1047,34 @@ process.on('message',function (message)
     {
         process.send({ error: true, ex: ex+'' });
     }
+};
+ 
+
+process.stdin.on('data',function (chunk)
+{
+    _json.push(chunk);  
 });
+
+process.on('message',function (message)
+{
+     (function _try()
+     {
+             try
+             {
+                 if (m= msgpack.unpack(Buffer.concat(_json)))
+                 {
+                     receive(m);
+                     _json=[];
+                 }
+                 else
+                     setTimeout(_try,10);
+             }
+             catch (ex)
+             {
+                 setTimeout(_try,10);
+             }
+     })();
+});
+
 
 process.send('next');

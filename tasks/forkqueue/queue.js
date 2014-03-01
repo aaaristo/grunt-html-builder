@@ -1,5 +1,6 @@
 var cp = require('child_process'),
     util = require('util'),
+    msgpack = require('msgpack'),
     EventEmitter = require('events').EventEmitter;
 
 var Queue = module.exports = function(numWorkers, workerModule) {
@@ -24,7 +25,14 @@ Queue.prototype.addWorker = function() {
   var self = this;
   var args= process.argv.slice(3);
   args.unshift(this.workers.length);
-  var worker = cp.fork(this.workerModule,args);
+  var worker = cp.fork(this.workerModule,args,{ silent: true });
+  worker.stdout.pipe(process.stdout);
+  worker.stderr.pipe(process.stderr);
+  worker.stdin.on('drain',function ()
+  {
+      worker.send('goahead');
+  });
+
   this.workers.push(worker);
   worker.on('message', function(m) {
     self.handleMessage(m, worker);
@@ -63,7 +71,8 @@ Queue.prototype.flush = function() {
     val = this.queue.pop();
     ++this.dequeued;
     this.emit('dequeued', val);
-    worker.send(val);
+    if (worker.stdin.write(msgpack.pack(val)))
+      worker.send('goahead');
   }
 };
 
