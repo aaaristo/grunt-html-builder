@@ -107,6 +107,7 @@ Queue.prototype.end = function(callback) {
 Queue.prototype.killWorkers = function() {
   this.workers.forEach(function(worker) {
     worker.disconnect();
+    worker.kill('SIGKILL');
   });
   this.terminated = true;
 }
