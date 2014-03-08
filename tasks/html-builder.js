@@ -442,16 +442,40 @@ module.exports = function(grunt)
           try
           {   
               var src= p.join('src','js','transform',transformation+'.js'),
-                  js= file.read(src);
+                  js= file.read(src),
+                  _async,
+                  ctrl= { cbs: [], async: function (cb) { this.cbs.push(cb); }, trigger: function (err,data) { this.cbs.forEach(function (cb) { cb(err,data); }); } };
 
-              eval('(function (grunt,_,clone,paginate,alias,collection,excel,json,index,mindex,context,done) { '+js+' })')
+              eval('(function (grunt,_,clone,paginate,alias,collection,excel,json,index,mindex,context,prequire,done,async) { '+js+' })')
                   (grunt,_,_clone,_paginate,_alias,_collection,_excel,data,_index,_mindex,_context,
-              function (transformed)
+              function (path)
               {
-                  data= transformed;
-              });
+                 return require(process.cwd()+'/node_modules/'+path);
+              },
+              function (transformed,t2)
+              {
+                  if (_async)
+                  {
+                    var ex= transformed;
+                    var transformed= t2;
 
-              return data;
+                    if (ex)
+                    {
+                      verbose.error(ex.stack);
+                      fail.fatal(ex+' evaluating '+src);
+                      ctrl.trigger(ex,null);
+                    }
+                    else
+                      ctrl.trigger(null,transformed);
+                  }
+                  else
+                    data= transformed;
+              },function () { _async= true; });
+
+              if (_async)
+                return ctrl;
+              else
+                return data;
           }
           catch (ex)
           {
@@ -739,10 +763,16 @@ module.exports = function(grunt)
            data= jsonpath(data,config.filter);
 
          if (config.slice)
+         {
            _writechunk(config.dest,data.slice.apply(data,config.slice));
+           done();
+         }
          else
          if (config.chunk)
+         {
            _chunkdata(data,config.dest,config.chunk);
+           done();
+         }
          else
          if (config.transform)
          {
@@ -751,14 +781,35 @@ module.exports = function(grunt)
             if (file.exists(dest)) 
              file.delete(dest);
 
-            file.write(dest,
-                       JSON.stringify(_transform(data,config.transform), undefined, 2));
-            log.ok('Generated JSON collection: '+dest);
+
+            var transformed= _transform(data,config.transform);
+
+            if (transformed.async)
+              transformed.async(function (err,data)
+              {
+                if (!err)
+                {
+                    file.write(dest,
+                               JSON.stringify(data, undefined, 2));
+                    log.ok('Generated JSON collection: '+dest);
+                }
+
+                done();
+              });
+            else
+            {
+                file.write(dest,
+                           JSON.stringify(transformed, undefined, 2));
+                log.ok('Generated JSON collection: '+dest);
+                done();
+            }
          }
          else 
+         {
            _writechunk(config.dest,data);
+           done();
+         }
 
-         done();
      },
      done);
   });
