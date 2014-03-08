@@ -236,13 +236,13 @@ a look at how the builder builds your pages:
 ['John','Jane','Dave','Mike']
 .forEach(function (person)
 {
-   page({ path: 'person/'+person.toLowerCase(), person: person });
+   page({ path: 'person/'+person.toLowerCase(), title: person });
 });
 ```
    so ok you got it... Open html.html and replace the content of the title tag to read: 
 
 ```html
-<title>{{>person}}'s page</title>
+<title>{{>title}}'s page</title>
 ```
 
    almost any html is a jsrender template the html.html renders the page object by default,
@@ -276,7 +276,7 @@ a look at how the builder builds your pages:
    as you can see the content of the layout is prepended to the body of the page (so that you can leave
    the js at the end for instance). 
 
- * Now that you have regions you can use them to place *blocks* and *templates*, lets add a sample peoples block to the page: create a *src/html/block/people.html* like this:
+ * Now that you have regions you can use them to place *blocks* and *templates*, lets add a sample peoples block to the page: create a *src/html/block/peoples.html* like this:
 
 ```html
 
