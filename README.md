@@ -269,7 +269,7 @@ a look at how the builder builds your pages:
 ['John','Jane','Dave','Mike']
 .forEach(function (person)
 {
-   page({ layout: 'sidebar', path: 'person/'+person.toLowerCase(), person: person });
+   page({ layout: 'sidebar', path: 'person/'+person.toLowerCase(), title: person });
 });
 ```
 
@@ -298,7 +298,7 @@ a look at how the builder builds your pages:
         layout: 'sidebar', 
         blocks: { sidebar: 'peoples' },
         path: 'person/'+person.toLowerCase(),
-        person: person 
+        title: person 
    });
 });
 ```
@@ -342,7 +342,7 @@ people.forEach(function (person)
        layout: 'sidebar', 
        blocks: { sidebar: ['peoples', template('person-menu',{ people: people })] },
        path: 'person/'+person.toLowerCase(),
-       person: person
+       title: person
    });
 });
 ```
@@ -365,7 +365,7 @@ people.forEach(function (person)
        blocks: { sidebar: ['peoples', template('person-menu',{ people: people })] },
        path: href(person),
        href: href, // tell the builder to use this function to build hrefs to this page type
-       person: person
+       title: person
    });
 });
 ```
@@ -402,7 +402,7 @@ people.forEach(function (person)
        blocks: { sidebar: ['peoples', template('person-menu',{ people: people })] },
        path: href(person),
        href: href, // tell the builder to use this function to build hrefs to this page type
-       person: person,
+       title: person,
        postBuild: function ($) // this function is serialized and sent to builder processes
        {
           $('body').addClass(this.person); // so you have to put any data in the page object to reference it
