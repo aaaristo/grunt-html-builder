@@ -411,26 +411,309 @@ people.forEach(function (person)
 });
 ```
 
-## Foundation 5 starter kit
+## A step back (lifecycle)
 
-here you can find a useful starter kit that uses Zurb Foundation as a Front-end framework
+The main idea behind this module is to get the data from some kind of legacy system,
+transform it and render the data to html pages. So ideally you would have this lifecycle phases:
 
-[https://github.com/signalkuppe/grunt-foundation5](https://github.com/signalkuppe/grunt-foundation5)
+* download: get the data from all the sources you need and place it in JSON format inside *data/json/<any>.json*
+* transform: transform all the json files that you imported in the most usefull form to generate your pages
+* render: generate the html from those data
+* postBuild: manipulate and arrange the generated html to fit your needs
+* deploy: push your html/css/js on some CDN
+
+How to perform those phases? (generally)
+
+* download: write any kind of code that reads your data sources and writes json files into the *data/json/* directory, you can even use asynchronous transformations to perform this task.
+* transform: you can place javascript files under *src/js/transform/<any>.js* to declare transformations
+* render: use templates / region blocks and *src/js/page/<any>.js* to render your markup
+* postBuild: declare postBuild hooks and use jquery to modify the generated page markup.
+* deploy: use the grunt tasks for your CDN provider to push your dist directory on a CDN.
+
+## Parallel generation
+
+In the render phase the grunt task forks 1 child for any core it finds on the machine where it is running.
+Those childs will then request jobs from a queue of pages to generate until all pages are generated, and the queue is emptied.
+
+## JSON collections
+
+Any JSON file under *src/json/* or *data/json/* should contain a JSON array of objects. The *src/json/* directory
+is ment for initial collections / manually managed JSON collections (under SCM), where the *data/json/* directory is ment as the target directory for transformations (not under SCM). For example, in a company website, you could have a
+*src/json/persons.json* which contains:
+
+```javascript
+[{
+   name: 'John Doe',
+   role: 'CEO',
+   googleplusid: '1323221312'
+},
+{
+   name: 'Hipster Hacker',
+   role: 'CTO',
+   googleplusid: '31232143444'
+},
+{
+   name: 'Mark Hustler',
+   role: 'CFO',
+   googleplusid: '53453543534'
+}]
+```
+
+this is from now on a *collection*. Collections are there to be transformed or rendered. For example, 
+you may want to integrate those info with what is present in the googleplus account of each person,
+to generate a more meaningful version of this collection in *data/json/persons.json*. This is what is,
+called a tranformation. Or you can use this collection in your page file:
+
+```javascript
+var people= collection('persons'), // the collection function returns the corresponding javascript array of the json file
+    href= function (person)
+    {
+       return 'person/'+person.name.toLowerCase();
+    };
+
+people.forEach(function (person)
+{
+   page
+   ({ 
+       layout: 'sidebar', 
+       blocks: { sidebar: ['peoples', template('person-menu',{ people: _.pluck(people,'name') })] },
+       path: href(person),
+       href: href, 
+       title: person.name,
+       postBuild: function ($) 
+       {
+          $('body').attr('data-googleplusid',this.person.googleplusid);
+       }
+   });
+});
+```
+
+
+## JSON transformations
+
+A transformation is a javascript file under *src/js/transform/*. For example *src/js/transform/google-profile.js*:
+
+```javascript
+async(); // tells the framework that this is an asynchronous transformation
+
+var request= prequire('request'), // prequire is a way to require your project modules instead of grunt-html-builder deps
+    config= grunt.config('google'), // you have access to grunt
+    profile= function (id,cb)
+    {
+            var json= '';
+
+            request.get('https://www.googleapis.com/plus/v1/people/'+id+'?key='+config.key,
+            function (err, res, body)
+            {
+               cb(JSON.parse(body));
+            });
+    };
+    
+var profiles= [], log= grunt.log, _= grunt.util._;
+
+grunt.util.async.forEachSeries(json, // inside any transformation you have a "json" variable, that is the collection you are transforming
+function (person,done)
+{
+                if (person.googleplusid)
+                  profile(person.googleplusid,function (p)
+                  {
+                          _.extend(person,{ title:    (p.organizations[0].title ? p.organizations[0].title : person.title),
+                                          aboutMe:  p.aboutMe });
+
+                          profiles.push(person);
+
+                          done();
+                      });
+                  });
+               else
+               {
+                  _.extend(person,{ foto: person.picture });
+                  profiles.push(person);
+                  done();
+               }
+},
+function (err)
+{
+   if (err)
+     done(err);
+   else
+     done(null,profiles);
+});
+```
+
+Once you have a transformation file you can configure it to run in the *Gruntfile.js* like this:
+
+```javascript
+  grunt.initConfig({
+    'html-builder': {
+          json: [
+                     { collection: 'persons',  transform: 'google-profile', dest: 'persons' },
+                     ...
+                     { collection: 'persons',  transform: 'simple', dest: 'dummy' },
+                ]
+   ....
+```
+
+In this case you have a "complex" transformation based on some asynchronous access to external resources.
+But you can define simpler trasnformations like *src/js/transform/simple.js*:
+
+```javascript
+
+json.forEach(function (person, idx)
+{
+  person.seq= idx;
+});
+
+done(json)
+
+```
+
+This is a synchronous transform. The only difference is that you don't call async(), and the done function
+only accepts one argument with the transformed collection.
+
+## XLSX transformations
+
+You can use also xlsx files as a source by placing them in the *data/excel/* directory, and transforming them by:
+
+
+```javascript
+  grunt.initConfig({
+    'html-builder': {
+          json: [
+                     { excel: 'persons',  transform: 'google-profile', dest: 'persons' },
+                ]
+   ....
+```
+
+and the modified version of an ipothetical *google-profile.js*:
+
+```javascript
+async(); // tells the framework that this is an asynchronous transformation
+
+var request= prequire('request'), // prequire is a way to require your project modules instead of grunt-html-builder deps
+    config= grunt.config('google'), // you have access to grunt
+    profile= function (id,cb)
+    {
+            var json= '';
+
+            request.get('https://www.googleapis.com/plus/v1/people/'+id+'?key='+config.key,
+            function (err, res, body)
+            {
+               cb(JSON.parse(body));
+            });
+    };
+    
+var workbook= json, profiles= [], log= grunt.log, _= grunt.util._,
+    persons= workbook.sheet('Persons')
+                     .toJSON(['name', // xlsx columns to object attributes (position / attribute name)
+                              'role'],
+                              function (p) { /*alter p as you whish*/ if (valid) return p; else return undefined; });
+
+
+
+grunt.util.async.forEachSeries(persons, // inside any transformation you have a "json" variable, that is the collection you are transforming
+function (person,done)
+{
+                if (person.googleplusid)
+                  profile(person.googleplusid,function (p)
+                  {
+                          _.extend(person,{ title:    (p.organizations[0].title ? p.organizations[0].title : person.title),
+                                          aboutMe:  p.aboutMe });
+
+                          profiles.push(person);
+
+                          done();
+                      });
+                  });
+               else
+               {
+                  _.extend(person,{ foto: person.picture });
+                  profiles.push(person);
+                  done();
+               }
+},
+function (err)
+{
+   if (err)
+     done(err);
+   else
+     done(null,profiles);
+});
+```
+
+## index / mindex
+
+When transoforming large amounts of data you may find convenint to use *index* or *mindex* functions.
+Suppose you are transforming a long list of persons and you have a "knows" array that contains ids for
+persons that the current person knows, but you want the complete object in place instead of only the id:
+You may:
+
+```javascript
+
+json.forEach(function (person)
+{
+
+    person.knows.forEach(function (id,idx)
+    {
+      person.knows[idx]= _.findWhere(json,{ id: id });
+    });
+
+});
+
+done(json);
+
+```
+
+While this will work, it will not be very fast... Because you are scanning the json array N times for each person,
+to transform. A better approach would be:
+
+```javascript
+
+var _person= index(json,'id');
+
+json.forEach(function (person)
+{
+
+    person.knows.forEach(function (id,idx)
+    {
+      person.knows[idx]= _person(id);
+    });
+
+});
+
+done(json);
+
+```
+
+This time it will be really faster, because the index function will create an *index* (_person) looping 1 time on the json array, when you call * _person* it will access an object by key returning you the result much faster.
+
+The index function is ment for unique indexes (like ids), while the mindex function is ment for non-unique indexes,
+like:
+
+```javascript
+
+var _persons= mindex(json,'name');
+
+json.forEach(function (person)
+{
+
+    person.manyJohn= _persons('John');
+
+});
+
+done(json);
+
+```
+
+where you can have multiple results for one index key, so the result is an array.
 
 ** ... doc in progress ...**
 
 Things to document:
-* lifecycle
-* parallel generation / cpu detection / pages.length
-* json collections
-* json trasformations
-* excel(xlsx) transformations
-* index / mindex / cache
 * html html
 * html layouts / regions
 * html blocks
 * html templates (jsrender)
-* postBuild hooks (enables you to modify the generated html with jquery before html file are written to disk)
 * client files (images,css,js...)
 * filtering pages
 * multi language support
