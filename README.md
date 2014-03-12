@@ -433,7 +433,14 @@ How to perform those phases? (generally)
 ## Parallel generation
 
 In the render phase the grunt task forks 1 child for any core it finds on the machine where it is running.
-Those childs will then request jobs from a queue of pages to generate until all pages are generated, and the queue is emptied.
+Those childs will then request jobs from a queue of pages to generate until all pages are generated, and the queue is emptied. To limit the number of builders you can configure the Gruntfile like this:
+
+```javascript
+  grunt.initConfig({
+    'html-builder': {
+          cpus: 2
+   ....
+```
 
 ## JSON collections
 
