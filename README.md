@@ -707,6 +707,70 @@ done(json);
 
 where you can have multiple results for one index key, so the result is an array.
 
+## Multi language support
+
+You can enable multi-language support by defining the languages propoerty in the Gruntfile configuration, like this:
+```javascript
+  grunt.initConfig({
+    'html-builder': {
+          languages: ['en','it','es','fr']
+   ....
+```
+this means that the default language for the site is English (the first), and you have some alternative language.
+From now on the builder will create 4 html files for every path you define in a page file, for example:
+<pre>
+index.html
+it/index.html
+es/index.html
+fr/index.html
+</pre>
+
+As you can see the default language has no prefix whether all other languages are prefixed with the prefix you specified in the *languages* array. We encourage you to use [standards](http://en.wikipedia.org/wiki/List_of_ISO_639-1_codes).
+Ho you switch between languages is up to your implementation: you just need to link the current path with the right prefix.
+
+Once you configured the *languages* array, you can use the *t* converter in your templates, to translate data or strings:
+```html
+
+    <p>This is a translated string: {{t:'Hello world'}}</p>
+
+    <p>This is a translated object property: {{t:role}}</p>
+    
+```
+
+In order to get your data translated you should define special object properties keyed by language like this:
+```javascript
+
+[{
+     name: 'John Doe',
+     role: {
+               en: 'Sales',
+               it: 'Vendite',
+               es: 'Venta',
+               fr: 'Ventes'
+           }
+}]
+
+```
+
+while to get strings translated you should define a special collection *src/json/i18n.json*, like this:
+```javascript
+
+{
+     "Hello world":  {
+                           it: 'Ciao mondo',
+                           es: 'Hola mundo',
+                           fr: 'Bonjour tout le monde'
+                     }
+}
+
+```
+
+That is actually JSON object where the default language string is the key, and the value is an object keyed by
+alternative languages.
+
+
+
+
 ** ... doc in progress ...**
 
 Things to document:
@@ -716,7 +780,6 @@ Things to document:
 * html templates (jsrender)
 * client files (images,css,js...)
 * filtering pages
-* multi language support
 * s3 / cloudfront deploy
 * RDF / jsonld support
 
