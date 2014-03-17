@@ -755,7 +755,7 @@ module.exports = function(grunt)
         return;
      }
 
-     async.forEach(config,function (config,done)
+     async.forEachSeries(config,function (config,done)
      {
          var data= (config.collection ? _collection(config.collection) : _excel(config.excel));
 
