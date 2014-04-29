@@ -76,6 +76,55 @@ cheerio.prototype.even = function() {
     return cheerio(evens);
 };
 
+cheerio.prototype.unwrap = function(){
+        this.parent().each(function(){
+        var $this = cheerio(this);
+        $this.replaceWith($this.children());
+        });
+        return this;
+};
+
+
+cheerio.prototype.wrapAll = function(structure){
+        if (this[0]) {
+                cheerio(this[0]).before(structure = cheerio(structure))
+                var children
+                // drill down to the inmost element
+                while ((children = structure.children()).length) structure = children.first()
+                cheerio(structure).append(this);
+        };
+        return this;
+};
+
+
+cheerio.prototype.appendTo = function(target)
+{
+        target = cheerio(target);
+        return target.append(this);
+};
+
+cheerio.prototype.indexOf = [].indexOf;
+
+var likeArray = function(obj) { return typeof obj.length == 'number'; },
+    slice = Array.prototype.slice;
+
+cheerio.prototype.not = function(selector){
+        var nodes=[];
+        if (_.isFunction(selector) && selector.call !== undefined){
+                this.each(function(idx){
+                        if (!selector.call(this,idx)) nodes.push(this)
+                });
+        }else {
+                var excludes = _.isString(selector)? this.filter(selector) :
+                        (likeArray(selector) && _.isFunction(selector.item)) ? slice.call(selector) : cheerio(selector);
+                this.each(function(i, el){
+                        if (excludes.indexOf(el) < 0) nodes.push(el)
+                })
+        };
+        var result = cheerio(nodes);
+        return result;
+};
+
 var globalConfig,
     pageTypes,
     i18n,
