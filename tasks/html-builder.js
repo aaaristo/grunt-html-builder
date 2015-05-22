@@ -607,9 +607,9 @@ module.exports = function(grunt)
                      var defaultLanguage,
                          _add= function (config,lang)
                          {
-                             pages.push({ path: (lang&&lang!=defaultLanguage ? lang+'/' : '')+config.path, config: config, lang: lang });
+      
+                             pages.push({ path: (lang&&lang!=defaultLanguage ? lang+'/' : '')+(config.path[lang] || config.path), config: config, lang: lang });
                          };
-
                      config.name= filename.replace('.js','');
                      config.path= config.path || config.name;
 

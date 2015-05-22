@@ -776,6 +776,24 @@ That is actually JSON object where the default language string is the key, and t
 alternative languages.
 
 
+You can specify different url aliases for different languages in your page.js just configure your href function properly
+```javascript
+
+      href= function (entity)
+      {
+        return {
+          it: entity.alias.it,
+          en: entity.alias.en
+        }
+      };
+
+      path:
+      {
+        it: href(entity).it,
+        en: href(entity).en
+      },
+
+```
 
 
 ** ... doc in progress ...**

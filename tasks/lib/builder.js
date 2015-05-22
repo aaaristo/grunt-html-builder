@@ -492,8 +492,9 @@ var   _index= function(collection,by)
                   if (config&&config.href)
                     try
                     {
-                        return (lang&&lang!=defaultLanguage ? '/'+lang+'/' : '/')+
-                                 config.href((data || (this.tagCtx ? this.tagCtx.view.data : {})),(pageNo ? pageNo : undefined))+'.html';
+                        var path= config.href((data || (this.tagCtx ? this.tagCtx.view.data : {})),(pageNo ? pageNo : undefined));
+                        path= path[lang] || path;
+                        return (lang&&lang!=defaultLanguage ? '/'+lang+'/' : '/')+path+'.html';        
                     }
                     catch (ex)
                     {
