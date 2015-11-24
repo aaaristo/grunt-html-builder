@@ -10,7 +10,6 @@ module.exports = function(grunt)
 {
   var jsonpath= require('JSONPath').eval,
       jsrender= require('./jsrender'),
-      msgpack= require('msgpack'),
       rdfstore= require('./rdfstore'),
       fs= require('fs'),
       os= require('os'),
@@ -702,7 +701,7 @@ module.exports = function(grunt)
                 if (message.triples)
                   _triples(message.id,function (triples)
                   {
-                       if (worker.stdin.write(msgpack.pack({ id: message.id, triples: triples })))
+                       if (worker.stdin.write(new Buffer(JSON.stringify({ id: message.id, triples: triples })))
                          worker.send('goahead');
                   });
              });

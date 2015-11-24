@@ -1,6 +1,5 @@
 var cp = require('child_process'),
     util = require('util'),
-    msgpack = require('msgpack'),
     EventEmitter = require('events').EventEmitter;
 
 var Queue = module.exports = function(numWorkers, workerModule) {
@@ -73,7 +72,7 @@ Queue.prototype.flush = function() {
     val = this.queue.pop();
     ++this.dequeued;
     this.emit('dequeued', val);
-    if (worker.stdin.write(msgpack.pack(val)))
+    if (worker.stdin.write(new Buffer(JSON.stringify(val),'utf8')))
       worker.send('goahead');
   }
 };

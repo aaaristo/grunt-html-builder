@@ -3,7 +3,6 @@ const ID= process.argv[2];
 var grunt= require('grunt'),
     cheerio= require('cheerio'),
     net = require('net');
-    msgpack= require('msgpack'),
     jsonpath= require('JSONPath').eval,
     jsrender= require('../jsrender'),
     xmlbuilder = require("xmlbuilder"),
@@ -1113,7 +1112,7 @@ process.on('message',function (message)
      {
              try
              {
-                 if (m= msgpack.unpack(Buffer.concat(_json)))
+                 if (m= JSON.parse(Buffer.concat(_json).toString('utf8')))
                  {
                      receive(m);
                      _json=[];
