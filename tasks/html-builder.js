@@ -701,8 +701,8 @@ module.exports = function(grunt)
                 if (message.triples)
                   _triples(message.id,function (triples)
                   {
-                       if (worker.stdin.write(new Buffer(JSON.stringify({ id: message.id, triples: triples })))
-                         worker.send('goahead');
+                       if (worker.stdin.write(new Buffer(JSON.stringify({ id: message.id, triples: triples }))))
+                          worker.send('goahead');
                   });
              });
 
