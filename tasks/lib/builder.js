@@ -41,16 +41,16 @@ var grunt= require('grunt'),
            throw(e);
         }
     },
-    _= grunt.util._,
-    async= grunt.util.async,
+    _= require('lodash'),
+    async= require('async'),
     mem= function ()
     {
          return util.inspect(process.memoryUsage());
     };
 
-grunt.option('verbose',_.contains(process.argv,'--verbose'));
-grunt.option('debug',_.contains(process.argv,'--debug'));
-grunt.option('stack',_.contains(process.argv,'--stack'));
+grunt.option('verbose',_.includes(process.argv,'--verbose'));
+grunt.option('debug',_.includes(process.argv,'--debug'));
+grunt.option('stack',_.includes(process.argv,'--stack'));
 
 
 cheerio.prototype.odd = function() {

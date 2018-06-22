@@ -18,6 +18,8 @@ module.exports = function(grunt)
       xmlbuilder = require("xmlbuilder"),
       forkqueue= require('./forkqueue'),
       xlsx= require('./lib/xlsx'),
+      _ = require('lodash'),
+      async = require('async'),
       argv = require('optimist').argv;
 
   var pageTypes= {},
@@ -30,8 +32,6 @@ module.exports = function(grunt)
       verbose= grunt.log.verbose,
       file= grunt.file,
       fail= grunt.fail,
-      _= grunt.util._,
-      async= grunt.util.async,
       mem= function ()
       {
          return util.inspect(process.memoryUsage());

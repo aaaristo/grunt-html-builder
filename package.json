@@ -1,19 +1,69 @@
 {
-  "name": "grunt-html-builder",
-  "description": "Build HTML sites",
-  "version": "0.6.1",
-  "homepage": "https://github.com/aaaristo/grunt-html-builder",
+  "_args": [
+    [
+      "grunt-html-builder@0.6.1",
+      "/Users/matteo/Documents/projects/git/plurimedia-new"
+    ]
+  ],
+  "_development": true,
+  "_from": "grunt-html-builder@0.6.1",
+  "_id": "grunt-html-builder@0.6.1",
+  "_inBundle": false,
+  "_integrity": "sha1-NT5Gt/paOwuY0/YSh+HW/3ncRWA=",
+  "_location": "/grunt-html-builder",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "version",
+    "registry": true,
+    "raw": "grunt-html-builder@0.6.1",
+    "name": "grunt-html-builder",
+    "escapedName": "grunt-html-builder",
+    "rawSpec": "0.6.1",
+    "saveSpec": null,
+    "fetchSpec": "0.6.1"
+  },
+  "_requiredBy": [
+    "#DEV:/"
+  ],
+  "_resolved": "https://registry.npmjs.org/grunt-html-builder/-/grunt-html-builder-0.6.1.tgz",
+  "_spec": "0.6.1",
+  "_where": "/Users/matteo/Documents/projects/git/plurimedia-new",
   "author": {
     "name": "Andrea Amerigo Aristodemo Gariboldi",
     "url": "https://github.com/aaaristo"
   },
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/aaaristo/grunt-html-builder"
-  },
   "bugs": {
     "url": "https://github.com/aaaristo/grunt-html-builder/issues"
   },
+  "dependencies": {
+    "JSONPath": "~0.9.1",
+    "async": "^2.6.1",
+    "cheerio": "~0.13.1",
+    "commander": "~1.3.2",
+    "lodash": "^4.17.10",
+    "node-zip": "~1.0.1",
+    "optimist": "~0.4.0",
+    "pkginfo": "~0.3.0",
+    "request": "~2.21.0",
+    "xmlbuilder": "~0.4.2",
+    "xmldom": "~0.1.16"
+  },
+  "description": "Build HTML sites",
+  "devDependencies": {
+    "grunt": "~0.4.0",
+    "grunt-contrib-jshint": "~0.2.0",
+    "grunt-contrib-nodeunit": "~0.1.2",
+    "grunt-contrib-watch": "~0.3.0",
+    "node-zip": "~1.0.1",
+    "optimist": "~0.4.0"
+  },
+  "engines": {
+    "node": ">= 0.8.0"
+  },
+  "homepage": "https://github.com/aaaristo/grunt-html-builder",
+  "keywords": [
+    "gruntplugin"
+  ],
   "licenses": [
     {
       "type": "MIT",
@@ -21,35 +71,16 @@
     }
   ],
   "main": "Gruntfile.js",
-  "engines": {
-    "node": ">= 0.8.0"
+  "name": "grunt-html-builder",
+  "peerDependencies": {
+    "grunt": "~0.4.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/aaaristo/grunt-html-builder.git"
   },
   "scripts": {
     "test": "grunt test --stack"
   },
-  "dependencies": {
-    "cheerio": "~0.13.1",
-    "JSONPath": "~0.9.1",
-    "xmlbuilder": "~0.4.2",
-    "node-zip": "~1.0.1",
-    "optimist": "~0.4.0",
-    "request": "~2.21.0",
-    "commander": "~1.3.2",
-    "pkginfo": "~0.3.0",
-    "xmldom": "~0.1.16"
-  },
-  "devDependencies": {
-    "grunt-contrib-jshint": "~0.2.0",
-    "grunt-contrib-nodeunit": "~0.1.2",
-    "grunt": "~0.4.0",
-    "grunt-contrib-watch": "~0.3.0",
-    "node-zip": "~1.0.1",
-    "optimist": "~0.4.0"
-  },
-  "peerDependencies": {
-    "grunt": "~0.4.0"
-  },
-  "keywords": [
-    "gruntplugin"
-  ]
+  "version": "0.6.2"
 }
