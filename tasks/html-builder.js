@@ -542,11 +542,14 @@ module.exports = function(grunt)
       },
       _sitemap= function (globalConfig,pages)
       {
-            var doc= xmlbuilder.create(),
-                root= doc.begin('urlset')
-                    .att('xmlns', 'http://www.sitemaps.org/schemas/sitemap/0.9')
-                    .att('xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance')
-                    .att('xsi:schemaLocation', 'http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd');
+            var doc= xmlbuilder.create('root'),
+                root = doc.ele('urlset', 
+                  { 
+                    xmlns: 'http://www.sitemaps.org/schemas/sitemap/0.9',
+                    'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
+                    'xsi:schemaLocation': 'http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd'
+                  }
+                );
              
             _.filter(pages,function (p){ return !p.isRDF; }).forEach(function (page)
             {
