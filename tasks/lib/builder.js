@@ -1021,8 +1021,11 @@ var evalFnc= function (str)
                         setTimeout(function ()
                         {
                             log.ok('inited');
+                            process.send({ inited: true })
                             done();
                         },message.wait);
+
+
                    },
                    page: function (p,done)
                    {
@@ -1097,7 +1100,8 @@ var _json= [], receive= function (message)
         process.send({ error: true, ex: ex+'' });
     }
 };
- 
+
+process.send({require_init: true });
 
 process.stdin.on('data',function (chunk)
 {

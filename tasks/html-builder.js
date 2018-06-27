@@ -670,7 +670,8 @@ module.exports = function(grunt)
          if (globalConfig.languages)
            i18n= _i18n();
 
-         var cpus= globalConfig.cpus || os.cpus().length;
+         var cpus= globalConfig.cpus || os.cpus().length,
+              waiting_init_count = cpus;
 
          if (cpus > pages.length) cpus= pages.length;
 
@@ -694,10 +695,18 @@ module.exports = function(grunt)
              log.ok('Launching builders...');
 
              pageQueue.concat(init);
-             pageQueue.concat(pages);
 
              pageQueue.on('msg',function (message, worker)
              {
+
+                if(message.inited) {
+                  waiting_init_count--
+                  if(waiting_init_count === 0)
+                    pageQueue.concat(pages)
+                }
+
+                if(message.require_init)
+                  worker.send({ init: true, globalConfig: globalConfig, pageTypes: pageTypes, i18n: i18n, wait: (cpus>1 ? cpus*100 : 1) })
                 if (message.error)
                   fail.fatal('Error from worker:'+message.ex);
                 else
@@ -707,6 +716,7 @@ module.exports = function(grunt)
                        if (worker.stdin.write(new Buffer(JSON.stringify({ id: message.id, triples: triples }))))
                           worker.send('goahead');
                   });
+
              });
 
              pageQueue.end(function ()
