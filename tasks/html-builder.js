@@ -542,18 +542,14 @@ module.exports = function(grunt)
       },
       _sitemap= function (globalConfig,pages)
       {
-            var doc= xmlbuilder.create('root'),
-                root = doc.ele('urlset', 
-                  { 
-                    xmlns: 'http://www.sitemaps.org/schemas/sitemap/0.9',
-                    'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
-                    'xsi:schemaLocation': 'http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd'
-                  }
-                );
-             
+            var doc = xmlbuilder.create('urlset');
+            doc.att('xmlns', 'http://www.sitemaps.org/schemas/sitemap/0.9')
+            doc.att('xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance')
+            doc.att('xsi:schemaLocation', 'http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd')
+
             _.filter(pages,function (p){ return !p.isRDF; }).forEach(function (page)
             {
-                root.ele('url')
+                doc.ele('url')
                        .ele('loc')
                          .txt(globalConfig.sitemap.urlPrefix+(page.path.match(/(^|\/)index$/) ? page.path.substring(0,page.path.length-5) : page.path+'.html'))
                        .up()
