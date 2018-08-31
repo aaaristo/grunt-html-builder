@@ -669,8 +669,6 @@ module.exports = function(grunt)
          var cpus= globalConfig.cpus || os.cpus().length,
               waiting_init_count = cpus;
 
-         if (cpus > pages.length) cpus= pages.length;
-
          pageQueue= new forkqueue(cpus, __dirname+'/lib/builder.js');
 
          if (typeof globalConfig.postBuild=='function')
